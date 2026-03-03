@@ -6,12 +6,14 @@ import { db } from "../../firebaseConfig";
 
 import {
   FiHome, FiBox, FiSearch, FiRepeat,
-  FiMapPin, FiBell, FiHelpCircle, FiLogOut
+  FiMapPin, FiBell, FiHelpCircle, FiLogOut,
+  FiMenu, FiX
 } from "react-icons/fi";
 
 export default function CustomerDashboard() {
   const router = useRouter();
   const [userName, setUserName] = useState("Customer");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -25,20 +27,34 @@ export default function CustomerDashboard() {
   }, []);
 
   return (
-    <div className="min-h-screen flex bg-[#FAFAFA] text-[#111]">
+    <div className="min-h-screen flex bg-[#FAFAFA] text-[#111] relative">
+
+      {/* MOBILE MENU BUTTON */}
+      <button
+        className="md:hidden fixed top-4 left-4 z-50 bg-[#F4B400] p-2 rounded-lg"
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+      >
+        {sidebarOpen ? <FiX size={22}/> : <FiMenu size={22}/>}
+      </button>
 
       {/* SIDEBAR */}
-      <aside className="w-64 bg-[#0B0B0B] text-white flex flex-col py-6 px-4 justify-between">
-
+      <aside
+        className={`
+          fixed md:static top-0 left-0 h-full w-64 bg-[#0B0B0B] text-white 
+          flex flex-col py-6 px-4 justify-between
+          transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+          md:translate-x-0 transition-transform duration-300 z-40
+        `}
+      >
         <div>
 
           {/* LOGO */}
           <div className="flex items-center gap-3 mb-10 px-2">
             <img src="/logo.jpg" className="w-10 h-10 rounded-full border"/>
             <h1 className="text-xl font-bold">
-              <span className="text-white">LINK</span>
+              <span>LINK</span>
               <span className="text-[#F4B400]">N</span>
-              <span className="text-white">RIDE</span>
+              <span>RIDE</span>
             </h1>
           </div>
 
@@ -49,7 +65,7 @@ export default function CustomerDashboard() {
                 {userName.charAt(0)}
               </div>
               <div>
-                <p className="font-semibold text-white">{userName}</p>
+                <p className="font-semibold">{userName}</p>
                 <p className="text-xs text-gray-400">Customer</p>
               </div>
             </div>
@@ -89,13 +105,13 @@ export default function CustomerDashboard() {
         </div>
       </aside>
 
-      {/* MAIN */}
-      <main className="flex-1 flex flex-col">
+      {/* MAIN CONTENT */}
+      <main className="flex-1 flex flex-col md:ml-0">
 
         {/* HEADER */}
-        <header className="bg-white border-b px-10 py-6 shadow-sm">
-          <h2 className="text-2xl font-bold text-black">
-            Welcome Back, {userName.split(" ")[0]} 
+        <header className="bg-white border-b px-4 md:px-10 py-6 shadow-sm">
+          <h2 className="text-xl md:text-2xl font-bold">
+            Welcome Back, {userName.split(" ")[0]}
           </h2>
         </header>
 
@@ -103,9 +119,9 @@ export default function CustomerDashboard() {
         <motion.section
           initial={{opacity:0,y:20}}
           animate={{opacity:1,y:0}}
-          className="p-10">
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl">
+          className="p-4 md:p-10"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 max-w-5xl">
 
             <DashboardCard
               title="Post My Load"
@@ -145,19 +161,19 @@ function NavItem({icon,label,onClick,active=false}:any){
 function DashboardCard({title,icon,description,onClick}:any){
   return(
     <motion.div whileHover={{y:-6}}
-      className="bg-white p-8 rounded-2xl shadow-sm border-2 border-gray-200 hover:border-[#F4B400] transition flex flex-col justify-between">
+      className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border-2 border-gray-200 hover:border-[#F4B400] transition flex flex-col justify-between">
 
       <div>
         <div className="w-12 h-12 bg-[#FFF3CC] text-[#F4B400] rounded-xl flex items-center justify-center mb-4">
           {icon}
         </div>
 
-        <h3 className="text-xl font-semibold text-black">{title}</h3>
-        <p className="text-gray-600 mt-3">{description}</p>
+        <h3 className="text-lg md:text-xl font-semibold">{title}</h3>
+        <p className="text-gray-600 mt-3 text-sm md:text-base">{description}</p>
       </div>
 
       <button onClick={onClick}
-        className="mt-8 bg-[#F4B400] hover:bg-[#e0a800] text-black py-3 rounded-xl font-semibold transition">
+        className="mt-6 bg-[#F4B400] hover:bg-[#e0a800] text-black py-3 rounded-xl font-semibold transition">
         Open
       </button>
     </motion.div>

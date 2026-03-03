@@ -18,10 +18,10 @@ export default function Home() {
   return (
     <Layout title="LinknRide - Smart Logistics Platform">
 
-      {/* ================= HERO (TRUCK BACKGROUND) ================= */}
-      <section className="relative h-[560px] flex items-center overflow-hidden">
+      {/* ================= HERO ================= */}
+      <section className="relative min-h-[520px] md:h-[560px] flex items-center overflow-hidden">
 
-        {/* REAL TRUCK IMAGE */}
+        {/* Background Image */}
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{
@@ -30,19 +30,20 @@ export default function Home() {
           }}
         />
 
-        {/* DARK OVERLAY FOR BLENDING */}
+        {/* Dark Overlay */}
         <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/80 to-black/70"></div>
 
-        {/* CONTENT */}
-        <div className="relative max-w-7xl mx-auto px-6 text-white">
-          <h1 className="text-5xl font-extrabold leading-tight">
+        {/* Content */}
+        <div className="relative max-w-7xl mx-auto px-4 md:px-6 text-white">
+
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight">
             Smart Logistics.{" "}
             <span className="text-yellow-400">Faster Transport.</span>
             <br />
             Trusted Network.
           </h1>
 
-          <p className="mt-5 text-lg max-w-xl text-white/90">
+          <p className="mt-5 text-base md:text-lg max-w-xl text-white/90">
             Connecting customers, vehicle owners, and drivers on one powerful
             platform — making logistics simple and transparent.
           </p>
@@ -62,34 +63,37 @@ export default function Home() {
               Explore Services
             </a>
           </div>
+
         </div>
       </section>
 
       {/* ================= STATS ================= */}
       <section className="py-10 bg-white text-center">
-        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
+        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 px-4">
           <div>
-            <h3 className="text-3xl font-bold text-black">10K+</h3>
+            <h3 className="text-2xl md:text-3xl font-bold text-black">10K+</h3>
             <p className="text-gray-600">Active Users</p>
           </div>
           <div>
-            <h3 className="text-3xl font-bold text-black">50K+</h3>
+            <h3 className="text-2xl md:text-3xl font-bold text-black">50K+</h3>
             <p className="text-gray-600">Loads Delivered</p>
           </div>
           <div>
-            <h3 className="text-3xl font-bold text-black">5K+</h3>
+            <h3 className="text-2xl md:text-3xl font-bold text-black">5K+</h3>
             <p className="text-gray-600">Vehicles Listed</p>
           </div>
           <div>
-            <h3 className="text-3xl font-bold text-black">98%</h3>
+            <h3 className="text-2xl md:text-3xl font-bold text-black">98%</h3>
             <p className="text-gray-600">Satisfaction Rate</p>
           </div>
         </div>
       </section>
 
       {/* ================= SERVICES ================= */}
-      <section id="services" className="py-20 bg-gray-50 text-center">
-        <h2 className="text-3xl font-bold mb-4 text-black">Our Services</h2>
+      <section id="services" className="py-16 md:py-20 bg-gray-50 text-center px-4">
+        <h2 className="text-2xl md:text-3xl font-bold mb-4 text-black">
+          Our Services
+        </h2>
         <p className="text-gray-600 mb-12">
           Everything you need to move goods efficiently across the country.
         </p>
@@ -136,8 +140,10 @@ export default function Home() {
       </section>
 
       {/* ================= WHY CHOOSE ================= */}
-      <section className="py-20 bg-black text-white text-center">
-        <h2 className="text-3xl font-bold mb-12">Why Choose LinknRide?</h2>
+      <section className="py-16 md:py-20 bg-black text-white text-center px-4">
+        <h2 className="text-2xl md:text-3xl font-bold mb-12">
+          Why Choose LinknRide?
+        </h2>
 
         <div className="max-w-6xl mx-auto grid md:grid-cols-5 gap-10">
           {[
@@ -159,8 +165,8 @@ export default function Home() {
       </section>
 
       {/* ================= CTA ================= */}
-      <section className="bg-yellow-400 py-16 text-center">
-        <h2 className="text-3xl font-bold mb-4 text-black">
+      <section className="bg-yellow-400 py-14 md:py-16 text-center px-4">
+        <h2 className="text-2xl md:text-3xl font-bold mb-4 text-black">
           Ready to Transform Your Logistics?
         </h2>
 
