@@ -1,0 +1,28 @@
+{
+  "name": "linknride-web",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "axios": "^1.6.8",
+    "firebase": "^12.5.0",
+    "framer-motion": "^12.23.24",
+    "lottie-react": "^2.4.1",
+    "lucide-react": "^0.552.0",
+    "next": "^16.0.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-icons": "^5.5.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.2",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.18",
+    "typescript": "^5.3.3"
+  }
+}
