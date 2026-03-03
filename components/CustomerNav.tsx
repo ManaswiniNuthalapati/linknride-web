@@ -14,11 +14,24 @@ export default function CustomerNav() {
 
   return (
     <header className="flex flex-col bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
+
       {/* Top bar */}
-      <div className="flex justify-between items-center px-8 py-3">
-        <div className="flex items-center gap-3 cursor-pointer" onClick={() => router.push("/customer/dashboard")}>
-          <Image src="/logo.jpg" alt="LinknRide Logo" width={40} height={40} className="rounded-full" />
-          <h1 className="text-2xl font-bold text-blue-700">LINKNRIDE</h1>
+      <div className="flex justify-between items-center px-4 md:px-8 py-3">
+
+        <div
+          className="flex items-center gap-2 md:gap-3 cursor-pointer"
+          onClick={() => router.push("/customer/dashboard")}
+        >
+          <Image
+            src="/logo.jpg"
+            alt="LinknRide Logo"
+            width={40}
+            height={40}
+            className="rounded-full"
+          />
+          <h1 className="text-lg md:text-2xl font-bold text-blue-700">
+            LINKNRIDE
+          </h1>
         </div>
 
         <div className="relative">
@@ -26,7 +39,9 @@ export default function CustomerNav() {
             className="flex items-center gap-2 cursor-pointer"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
           >
-            <span className="font-medium text-gray-700">Hi, Customer</span>
+            <span className="hidden sm:block font-medium text-gray-700">
+              Hi, Customer
+            </span>
             <Image
               src="/profile-icon.png"
               alt="Profile"
@@ -56,12 +71,12 @@ export default function CustomerNav() {
       </div>
 
       {/* Navigation menu */}
-      <nav className="flex justify-center gap-8 border-t border-gray-200 py-3 bg-white/60">
+      <nav className="flex gap-6 md:gap-8 overflow-x-auto border-t border-gray-200 py-3 px-4 md:px-0 bg-white/60">
         {navLinks.map((link) => (
           <button
             key={link.path}
             onClick={() => router.push(link.path)}
-            className={`font-medium ${
+            className={`whitespace-nowrap font-medium ${
               router.pathname === link.path
                 ? "text-blue-700 border-b-2 border-blue-600 pb-1"
                 : "text-gray-600 hover:text-blue-700"
