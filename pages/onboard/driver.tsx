@@ -138,8 +138,33 @@ export default function DriverOnboard() {
               <input value={form.city} readOnly className="w-full mt-1 px-4 py-3 border-2 border-gray-200 rounded-lg bg-gray-100"/>
             </div>
 
-            <Input label="Age" value={form.age} onChange={(v)=>handleChange("age",v)}/>
-            <Input label="Experience (years)" value={form.experience} onChange={(v)=>handleChange("experience",v)}/>
+            {/* AGE */}
+<div>
+  <label className="font-semibold">Age</label>
+  <input
+    value={form.age}
+    maxLength={2}
+    onChange={(e)=>{
+      const val = e.target.value.replace(/\D/g,"");
+      if(val.length<=2) handleChange("age",val);
+    }}
+    className="w-full mt-1 px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-[#F4B400]"
+  />
+</div>
+
+{/* EXPERIENCE */}
+<div>
+  <label className="font-semibold">Experience (years)</label>
+  <input
+    value={form.experience}
+    maxLength={2}
+    onChange={(e)=>{
+      const val = e.target.value.replace(/\D/g,"");
+      if(val.length<=2) handleChange("experience",val);
+    }}
+    className="w-full mt-1 px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-[#F4B400]"
+  />
+</div>
             <Input label="Address" value={form.address} onChange={(v)=>handleChange("address",v)}/>
           </div>
 
@@ -168,12 +193,14 @@ function Input({label,value,onChange}:any){
   return(
     <div>
       <label className="font-semibold">{label}</label>
-      <input value={value} onChange={(e)=>onChange(e.target.value)}
-        className="w-full mt-1 px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-[#F4B400]" />
+      <input
+        value={value}
+        onChange={(e)=>onChange(e.target.value)}
+        className="w-full mt-1 px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-[#F4B400]"
+      />
     </div>
   );
 }
-
 /* FILE UPLOAD */
 function FileUpload({label,fileSetter,preview,setPreview}:any){
   return(

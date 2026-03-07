@@ -1,4 +1,3 @@
-// web/firebaseConfig.js
 import { initializeApp } from "firebase/app";
 import {
   getAuth,
@@ -7,31 +6,25 @@ import {
 } from "firebase/auth";
 import {
   getFirestore,
-  setLogLevel // ✅ to control Firestore logging
+  setLogLevel
 } from "firebase/firestore";
-import { getStorage } from "firebase/storage"; // ✅ storage import
+import { getStorage } from "firebase/storage";
 
-// ✅ Correct Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyBxniKL0VsNhhxUsgqgA3_17f4URTlC8TQ",
-  authDomain: "linknride-app.firebaseapp.com",
-  projectId: "linknride-app",
-  storageBucket: "linknride-app.appspot.com", // ✅ must end with .appspot.com
-  messagingSenderId: "1085092506795",
-  appId: "1:1085092506795:web:2131da0625f4b5a22c1bee",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// ✅ Initialize Firebase once
 const app = initializeApp(firebaseConfig);
 
-// ✅ Firebase services
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// ✅ Optional but highly recommended:
-// This line silences repetitive "WebChannelConnection RPC 'Listen'" logs
 setLogLevel("error");
 
-// ✅ Export everything needed
 export { auth, RecaptchaVerifier, signInWithPhoneNumber, db, storage };

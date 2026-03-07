@@ -33,7 +33,7 @@ export default function CustomerProfile() {
 
   if (loading)
     return (
-      <div className="min-h-screen flex items-center justify-center text-[#0F3F66] text-lg font-semibold">
+      <div className="min-h-screen flex items-center justify-center text-lg font-semibold">
         Loading profile...
       </div>
     );
@@ -41,101 +41,107 @@ export default function CustomerProfile() {
   if (!profile)
     return (
       <div className="min-h-screen flex flex-col items-center justify-center text-gray-600">
-        <p className="text-xl">⚠️ No profile data found.</p>
+        <p className="text-xl">No profile data found</p>
+
         <button
           onClick={() => router.push("/customer/edit-profile")}
-          className="mt-4 bg-[#0F3F66] text-white px-6 py-2 rounded-xl hover:bg-[#0c3454]"
+          className="mt-6 bg-[#F4B400] text-black px-6 py-3 rounded-lg font-semibold hover:bg-[#e0a800]"
         >
-          Create / Update Profile
+          Create Profile
         </button>
       </div>
     );
 
   return (
-    <div className="min-h-screen flex flex-col bg-surface-light text-gray-800">
+    <div className="min-h-screen flex flex-col bg-[#FAFAFA]">
 
       {/* HEADER */}
-      <header className="bg-white shadow-sm px-8 py-4 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-[#0F3F66] tracking-wide">
-          My Profile
+      <header className="bg-black text-white px-8 py-4 flex justify-between items-center">
+        <h1 className="text-xl font-bold">
+          <span>LINK</span>
+          <span className="text-[#F4B400]">N</span>
+          <span>RIDE</span>
         </h1>
+
         <button
           onClick={() => router.push("/customer/dashboard")}
-          className="text-[#0F3F66] font-medium hover:underline"
+          className="text-sm hover:text-[#F4B400]"
         >
-          ← Back to Dashboard
+          Back to Dashboard
         </button>
       </header>
 
-      {/* PROFILE CARD */}
+      {/* PROFILE */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="flex-grow px-6 py-16 flex justify-center"
+        className="flex-grow flex justify-center items-center px-6 py-12"
       >
-        <div className="w-full max-w-4xl bg-white shadow-xl rounded-2xl p-10 border border-gray-100">
+        <div className="w-full max-w-3xl bg-white rounded-xl shadow-md p-10">
 
-          {/* PROFILE HEADER */}
-          <div className="flex flex-col items-center mb-8">
+          {/* PHOTO */}
+          <div className="flex flex-col items-center mb-10">
             <img
               src={profile.photoURL || "/default-avatar.png"}
               alt="Profile"
-              className="w-28 h-28 rounded-full border-2 border-[#0F3F66] shadow-md object-cover"
+              className="w-24 h-24 rounded-full object-cover border-4 border-[#F4B400]"
             />
-            <h2 className="text-2xl font-semibold text-[#0F3F66] mt-4">
-              {profile.fullName || "Unnamed User"}
+
+            <h2 className="text-2xl font-bold mt-4">
+              {profile.fullName || "Customer"}
             </h2>
-            <p className="text-gray-600 text-sm">
+
+            <p className="text-gray-500 text-sm">
               {profile.email || "No email provided"}
             </p>
           </div>
 
-          {/* PROFILE DETAILS */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
-            {[
-              { label: "Aadhar Number", value: profile.aadhar },
-              { label: "Address", value: profile.address },
-              { label: "Shop Name", value: profile.shopName },
-              { label: "GST Number", value: profile.gst },
-            ].map((item, i) => (
-              <div
-                key={i}
-                className="bg-gray-50 p-4 rounded-xl shadow-sm border border-gray-100"
-              >
-                <p className="text-gray-500 text-sm">{item.label}</p>
-                <p className="text-gray-800 font-medium mt-1">
-                  {item.value || "—"}
-                </p>
-              </div>
-            ))}
+          {/* DETAILS */}
+          <div className="grid md:grid-cols-2 gap-6">
+
+            <ProfileField label="Aadhar Number" value={profile.aadhar} />
+            <ProfileField label="Address" value={profile.address} />
+            <ProfileField label="Shop Name" value={profile.shopName} />
+            <ProfileField label="GST Number" value={profile.gst} />
+
           </div>
 
-          {/* ACTION BUTTONS */}
-          <div className="flex flex-col sm:flex-row justify-center gap-4 mt-10">
+          {/* ACTIONS */}
+          <div className="flex justify-center gap-4 mt-10">
+
             <button
               onClick={() => router.push("/customer/edit-profile")}
-              className="bg-[#0F3F66] text-white px-8 py-3 rounded-xl font-semibold hover:bg-[#0c3454] transition shadow"
+              className="bg-[#F4B400] text-black px-6 py-3 rounded-lg font-semibold hover:bg-[#e0a800]"
             >
-              ✏️ Edit Profile
+              Edit Profile
             </button>
 
             <button
               onClick={() => router.push("/customer/dashboard")}
-              className="bg-gray-200 text-gray-700 px-8 py-3 rounded-xl font-semibold hover:bg-gray-300 transition shadow"
+              className="border border-gray-300 px-6 py-3 rounded-lg hover:bg-gray-100"
             >
-              ← Back
+              Back
             </button>
-          </div>
 
+          </div>
         </div>
       </motion.div>
 
       {/* FOOTER */}
-      <footer className="bg-[#0F3F66] text-white text-center text-sm py-4">
-        © {new Date().getFullYear()}{" "}
-        <span className="font-semibold">LinknRide</span>. All rights reserved.
+      <footer className="bg-black text-white text-center py-3 text-sm">
+        © {new Date().getFullYear()} LinknRide
       </footer>
+
+    </div>
+  );
+}
+
+/* PROFILE FIELD */
+function ProfileField({ label, value }: any) {
+  return (
+    <div className="bg-gray-50 rounded-lg p-4 border">
+      <p className="text-gray-500 text-sm">{label}</p>
+      <p className="font-semibold mt-1">{value || "—"}</p>
     </div>
   );
 }

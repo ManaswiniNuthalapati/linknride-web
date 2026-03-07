@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { useRouter } from "next/router";
 import {
   collection,
   query,
@@ -14,15 +13,16 @@ import {
   doc,
 } from "firebase/firestore";
 import { db } from "../../firebaseConfig";
-import {
-  FaRoute,
-  FaCalendarAlt,
-  FaClock,
-  FaWeightHanging,
-  FaRupeeSign,
-  FaBoxOpen,
-} from "react-icons/fa";
+import { useRouter } from "next/router";
 import Image from "next/image";
+
+import {
+  FiTruck,
+  FiMapPin,
+  FiPackage,
+  FiCalendar,
+  FiClock,
+} from "react-icons/fi";
 
 type LoadItem = {
   id: string;
@@ -30,8 +30,8 @@ type LoadItem = {
   drop?: string;
   pickupDate?: string;
   pickupTime?: string;
-  capacityRequired?: string | number;
-  price?: number | null;
+  capacityRequired?: number;
+  price?: number;
   customerId?: string;
   typeOfGoods?: string;
 };
@@ -39,37 +39,31 @@ type LoadItem = {
 export default function OwnerSearchLoads() {
   const router = useRouter();
 
-  const [pickupInput, setPickupInput] = useState("");
-  const [dropInput, setDropInput] = useState("");
-  const [pickup, setPickup] = useState("");
-  const [drop, setDrop] = useState("");
+  const [search, setSearch] = useState({ pickup: "", drop: "" });
   const [loads, setLoads] = useState<LoadItem[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // 🔐 Auth check
   useEffect(() => {
     const uid = localStorage.getItem("linknride_uid");
     if (!uid) router.push("/login");
   }, [router]);
 
-  // 🔄 Fetch Loads from Firestore
+  /* FETCH LOADS */
+
   useEffect(() => {
     setLoading(true);
+
     const loadsRef = collection(db, "loads");
 
     let q: any = query(loadsRef, orderBy("createdAt", "desc"));
 
-    if (pickup && drop) {
+    if (search.pickup && search.drop) {
       q = query(
         loadsRef,
-        where("pickup", "==", pickup),
-        where("drop", "==", drop),
+        where("pickup", "==", search.pickup),
+        where("drop", "==", search.drop),
         orderBy("createdAt", "desc")
       );
-    } else if (pickup) {
-      q = query(loadsRef, where("pickup", "==", pickup), orderBy("createdAt", "desc"));
-    } else if (drop) {
-      q = query(loadsRef, where("drop", "==", drop), orderBy("createdAt", "desc"));
     }
 
     const unsub = onSnapshot(q, (snap) => {
@@ -77,25 +71,28 @@ export default function OwnerSearchLoads() {
         id: d.id,
         ...(d.data() as any),
       }));
+
       setLoads(items);
       setLoading(false);
     });
 
     return () => unsub();
-  }, [pickup, drop]);
+  }, [search]);
 
-  const handleSearch = () => {
-    setPickup(pickupInput.trim());
-    setDrop(dropInput.trim());
+  const handleChange = (e: any) =>
+    setSearch({ ...search, [e.target.name]: e.target.value });
+
+  const handleSearch = (e: any) => {
+    e.preventDefault();
   };
 
-  // ⭐⭐⭐ FIXED ACCEPT LOAD FUNCTION ⭐⭐⭐
+  /* ACCEPT LOAD */
+
   const handleAcceptLoad = async (load: LoadItem) => {
     try {
       const ownerId = localStorage.getItem("linknride_uid");
       if (!ownerId) return;
 
-      // 1️⃣ Check if request already exists
       const existingQuery = query(
         collection(db, "requests"),
         where("loadId", "==", load.id),
@@ -104,7 +101,6 @@ export default function OwnerSearchLoads() {
 
       const snap = await getDocs(existingQuery);
 
-      // 2️⃣ If exists → UPDATE (no duplicates)
       if (!snap.empty) {
         const requestId = snap.docs[0].id;
 
@@ -115,12 +111,10 @@ export default function OwnerSearchLoads() {
           updatedAt: serverTimestamp(),
         });
 
-        alert("✅ Load accepted!");
         router.push("/owner/my-requests");
         return;
       }
 
-      // 3️⃣ If not exists → create new request
       await addDoc(collection(db, "requests"), {
         loadId: load.id,
         customerId: load.customerId,
@@ -132,9 +126,7 @@ export default function OwnerSearchLoads() {
         updatedAt: serverTimestamp(),
       });
 
-      alert("✅ Load accepted!");
       router.push("/owner/my-requests");
-
     } catch (err) {
       console.error(err);
       alert("Error accepting load");
@@ -142,73 +134,224 @@ export default function OwnerSearchLoads() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FAFAFA]">
+    <div className="min-h-screen bg-[#FAFAFA] flex flex-col">
 
       {/* HEADER */}
+
       <header className="bg-white border-b px-10 py-4 flex justify-between items-center">
-        <div className="flex items-center gap-3 cursor-pointer" onClick={()=>router.push("/owner/dashboard")}>
-          <Image src="/logo.jpg" alt="Logo" width={50} height={50} className="rounded-full"/>
-          <h1 className="text-3xl font-extrabold tracking-wider">
+
+        <div
+          onClick={() => router.push("/owner/dashboard")}
+          className="flex items-center gap-3 cursor-pointer"
+        >
+          <Image
+            src="/logo.jpg"
+            alt="logo"
+            width={45}
+            height={45}
+            className="rounded-full"
+          />
+
+          <h1 className="text-2xl font-extrabold">
             <span className="text-black">LINK</span>
             <span className="text-[#F4B400]">N</span>
             <span className="text-black">RIDE</span>
           </h1>
         </div>
 
-        <button onClick={()=>router.push("/owner/dashboard")} className="text-[#F4B400] font-semibold">
-          ← Back to Dashboard
+        <button
+          onClick={() => router.push("/owner/dashboard")}
+          className="px-5 py-2 border-2 border-[#F4B400] rounded-lg hover:bg-[#FFE8A3]"
+        >
+          Back
         </button>
+
       </header>
 
-      {/* CONTENT */}
-      <motion.section className="flex-grow px-10 py-10">
-        <h2 className="text-2xl font-bold mb-6">Search Loads</h2>
 
-        {/* SEARCH BAR */}
-        <div className="bg-white p-6 rounded-xl shadow mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <input value={pickupInput} onChange={(e)=>setPickupInput(e.target.value)} placeholder="Pickup Location" className="border rounded px-3 py-2"/>
-          <input value={dropInput} onChange={(e)=>setDropInput(e.target.value)} placeholder="Drop Location" className="border rounded px-3 py-2"/>
-          <button onClick={handleSearch} className="bg-[#F4B400] text-black rounded px-4 py-2 font-semibold">
-            Search
+      {/* SEARCH */}
+
+      <motion.form
+        onSubmit={handleSearch}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="px-6 py-14 flex justify-center"
+      >
+
+        <div className="w-full max-w-4xl bg-white shadow-lg rounded-2xl p-10 border">
+
+          <h2 className="text-2xl font-bold text-center mb-8">
+            Search Loads
+          </h2>
+
+          <div className="grid md:grid-cols-2 gap-6">
+
+            <Input
+              name="pickup"
+              label="Pickup Location"
+              value={search.pickup}
+              onChange={handleChange}
+            />
+
+            <Input
+              name="drop"
+              label="Drop Location"
+              value={search.drop}
+              onChange={handleChange}
+            />
+
+          </div>
+
+          <button
+            type="submit"
+            className="mt-10 w-full py-3 font-semibold rounded-xl
+            bg-[#F4B400] text-black hover:bg-[#e0a800]"
+          >
+            Search Loads
           </button>
+
         </div>
 
-        {/* LOAD CARDS */}
-        {loading ? (
-          <p className="text-center">Loading...</p>
-        ) : loads.length === 0 ? (
-          <p className="text-center text-gray-500">No loads found</p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {loads.map((l) => (
-              <motion.div key={l.id} whileHover={{y:-6}}
-                className="bg-white rounded-2xl p-6 border-2 border-gray-200 hover:border-[#F4B400] transition shadow-sm hover:shadow-xl">
+      </motion.form>
 
-                <h3 className="text-lg font-bold mb-2 flex items-center gap-2">
-                  <FaBoxOpen className="text-[#F4B400]" /> {l.typeOfGoods}
-                </h3>
 
-                <p className="text-gray-700"><FaRoute className="inline"/> {l.pickup} → {l.drop}</p>
-                <p className="text-gray-700"><FaCalendarAlt className="inline"/> {l.pickupDate} <FaClock className="inline ml-2"/> {l.pickupTime}</p>
-                <p className="text-gray-700"><FaWeightHanging className="inline"/> {l.capacityRequired} tons</p>
-                <p className="text-gray-900 font-bold"><FaRupeeSign className="inline"/> {l.price}</p>
+      {/* LOADING */}
 
-                <button
-                  onClick={()=>handleAcceptLoad(l)}
-                  className="mt-4 bg-[#F4B400] text-black py-2 rounded-lg font-semibold hover:bg-[#e0a800] w-full"
-                >
-                  Accept Load
-                </button>
+      {loading && (
+        <p className="text-center mb-10">
+          Loading loads...
+        </p>
+      )}
 
-              </motion.div>
-            ))}
-          </div>
-        )}
-      </motion.section>
+      {!loading && loads.length === 0 && (
+        <p className="text-center mb-10">
+          No loads available
+        </p>
+      )}
 
-      <footer className="bg-black text-white text-center text-sm py-4">
-        © {new Date().getFullYear()} <span className="text-[#F4B400]">LinknRide</span>
+
+      {/* LOAD CARDS */}
+
+      <div className="max-w-6xl mx-auto grid md:grid-cols-2 lg:grid-cols-3 gap-10 px-6 mb-16">
+
+        {loads.map((load) => (
+
+          <motion.div
+            key={load.id}
+            whileHover={{ y: -6, scale: 1.02 }}
+            className="bg-white rounded-2xl shadow-md p-14 border-2 border-gray-200
+            hover:border-[#F4B400] hover:shadow-xl transition"
+          >
+
+            {/* GOODS */}
+
+            <div className="flex items-center gap-3 text-xl font-semibold mb-5">
+
+              <FiTruck className="text-[#F4B400] text-2xl" />
+
+              {load.typeOfGoods}
+
+            </div>
+
+
+            {/* ROUTE */}
+
+            <p className="flex items-center gap-3 text-gray-600 mb-3">
+
+              <FiMapPin className="text-[#F4B400] text-xl" />
+
+              {load.pickup} → {load.drop}
+
+            </p>
+
+
+            {/* DATE */}
+
+            <p className="flex items-center gap-3 text-gray-600 mb-3">
+
+              <FiCalendar className="text-[#F4B400]" />
+
+              {load.pickupDate}
+
+              <FiClock className="ml-3 text-[#F4B400]" />
+
+              {load.pickupTime}
+
+            </p>
+
+
+            {/* CAPACITY */}
+
+            <p className="flex items-center gap-3 text-gray-600 mb-6">
+
+              <FiPackage className="text-[#F4B400] text-xl" />
+
+              Capacity: {load.capacityRequired} tons
+
+            </p>
+
+
+            {/* PRICE */}
+
+            <p className="text-lg font-semibold mb-8">
+
+              ₹ {load.price}
+
+            </p>
+
+
+            <button
+              onClick={() => handleAcceptLoad(load)}
+              className="w-full py-4 rounded-xl border-2 border-[#F4B400]
+              font-semibold hover:bg-[#FFE8A3] transition"
+            >
+              Accept Load
+            </button>
+
+          </motion.div>
+
+        ))}
+
+      </div>
+
+
+      {/* FOOTER */}
+
+      <footer className="bg-[#0B0B0B] text-white text-center text-sm py-4">
+
+        © {new Date().getFullYear()}{" "}
+        <span className="text-[#F4B400] font-semibold">
+          LinknRide
+        </span>
+
       </footer>
+
+    </div>
+  );
+}
+
+
+/* INPUT COMPONENT */
+
+function Input({ label, name, value, onChange, type = "text" }: any) {
+  return (
+    <div>
+
+      {label && (
+        <label className="block text-sm font-semibold mb-1">
+          {label}
+        </label>
+      )}
+
+      <input
+        type={type}
+        name={name}
+        value={value}
+        onChange={onChange}
+        className="w-full border-2 border-gray-200 rounded-lg px-4 py-2
+        focus:border-[#F4B400] outline-none"
+      />
+
     </div>
   );
 }
