@@ -12,7 +12,8 @@ import {
   FaUser,
   FaBell,
   FaSignOutAlt,
-  FaBars
+  FaBars,
+  FaLifeRing
 } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import Image from "next/image";
@@ -57,13 +58,14 @@ export default function OwnerDashboard() {
   };
 
   const menuItems = [
-    { icon: <FaUserTie />, label: "Hire Drivers", path: "/owner/hire-drivers" },
-    { icon: <FaSyncAlt />, label: "Active Requests / Bids", path: "/owner/my-requests" },
-    { icon: <FaRoute />, label: "Ongoing Trips", path: "/owner/ongoing-trips" },
-    { icon: <FaHistory />, label: "Trip History", path: "/owner/view-history" },
-    { icon: <FaUser />, label: "Profile & Vehicles", path: "/owner/profile" },
-    { icon: <FaBell />, label: "Notifications", path: "/owner/notifications" },
-  ];
+  { icon: <FaUserTie />, label: "Hire Drivers", path: "/owner/hire-drivers" },
+  { icon: <FaSyncAlt />, label: "Active Requests / Bids", path: "/owner/my-requests" },
+  { icon: <FaRoute />, label: "Ongoing Trips", path: "/owner/ongoing-trips" },
+  { icon: <FaHistory />, label: "Trip History", path: "/owner/view-history" },
+  { icon: <FaUser />, label: "Profile & Vehicles", path: "/owner/profile" },
+  { icon: <FaBell />, label: "Notifications", path: "/owner/notifications" },
+  { icon: <FaLifeRing />, label: "Support", path: "/owner/support" }
+];
 
   const cards = [
     {
@@ -215,10 +217,6 @@ className="flex items-center gap-3"
 {owner?.avatarUrl
 ? <Image src={owner.avatarUrl} alt="Owner" width={36} height={36} className="rounded-full"/>
 : <FaUserCircle className="text-3xl text-[#F4B400]" />}
-
-<span className="text-sm">
-Hi, {owner?.fullName?.split(" ")[0] || "Owner"} ▾
-</span>
 
 </button>
 

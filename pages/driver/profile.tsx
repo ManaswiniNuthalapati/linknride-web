@@ -94,12 +94,11 @@ export default function DriverProfile() {
           {/* ACTION BUTTONS */}
           <div className="mt-10 flex gap-4 justify-center">
             <button
-              onClick={() => router.push("/driver/edit-profile")}
-              className="px-8 py-3 bg-[#F4B400] text-black font-semibold rounded-xl hover:bg-[#e0a800]"
-            >
-              Edit Profile
-            </button>
-
+onClick={() => router.push("/driver/edit")}
+className="bg-[#F4B400] px-6 py-3 rounded-lg font-semibold"
+>
+Edit Profile
+</button>
             <button
               onClick={() => router.push("/driver/dashboard")}
               className="px-8 py-3 border-2 border-[#F4B400] text-[#F4B400] font-semibold rounded-xl hover:bg-[#FFF3CC]"

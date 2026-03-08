@@ -5,7 +5,7 @@ import { useRouter } from "next/router";
 import { motion } from "framer-motion";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../firebaseConfig";
-import { FaTruck, FaArrowLeft, FaUser, FaEdit } from "react-icons/fa";
+import { FaTruck, FaArrowLeft } from "react-icons/fa";
 
 export default function OwnerProfile() {
 
@@ -80,19 +80,12 @@ export default function OwnerProfile() {
 
 <header className="bg-white border-b px-8 py-4 flex justify-between items-center">
 
-<h1 className="text-2xl font-bold flex items-center gap-2">
-<FaUser className="text-[#F4B400]" />
+<h1
+onClick={() => router.push("/owner/dashboard")}
+className="text-2xl font-bold cursor-pointer"
+>
 Owner Profile
 </h1>
-
-<div className="flex gap-4">
-
-<button
-onClick={() => router.push("/owner/edit-profile")}
-className="flex items-center gap-2 bg-[#F4B400] text-black px-4 py-2 rounded-lg font-semibold hover:bg-[#e0a800]"
->
-<FaEdit /> Edit Profile
-</button>
 
 <button
 onClick={() => router.push("/owner/dashboard")}
@@ -101,8 +94,6 @@ className="flex items-center gap-2 text-gray-700 hover:text-black"
 <FaArrowLeft />
 Back
 </button>
-
-</div>
 
 </header>
 
@@ -117,6 +108,7 @@ className="max-w-5xl mx-auto p-8 mt-10 bg-white rounded-2xl shadow-sm border"
 >
 
 <h2 className="text-2xl font-bold text-center mb-8">
+
 {ownerData.fullName || "Owner"}
 </h2>
 
@@ -128,14 +120,12 @@ className="max-w-5xl mx-auto p-8 mt-10 bg-white rounded-2xl shadow-sm border"
 <div className="bg-[#FAFAFA] p-4 rounded-xl border">
 
 <p>
-<span className="font-semibold">Mobile:</span>
-{" "}
+<span className="font-semibold">Mobile:</span>{" "}
 {ownerData.phone}
 </p>
 
 <p className="mt-2">
-<span className="font-semibold">Email:</span>
-{" "}
+<span className="font-semibold">Email:</span>{" "}
 {ownerData.email || "N/A"}
 </p>
 
@@ -145,14 +135,12 @@ className="max-w-5xl mx-auto p-8 mt-10 bg-white rounded-2xl shadow-sm border"
 <div className="bg-[#FAFAFA] p-4 rounded-xl border">
 
 <p>
-<span className="font-semibold">City:</span>
-{" "}
+<span className="font-semibold">City:</span>{" "}
 {ownerData.city}
 </p>
 
 <p className="mt-2">
-<span className="font-semibold">State:</span>
-{" "}
+<span className="font-semibold">State:</span>{" "}
 {ownerData.state}
 </p>
 
@@ -162,14 +150,12 @@ className="max-w-5xl mx-auto p-8 mt-10 bg-white rounded-2xl shadow-sm border"
 <div className="bg-[#FAFAFA] p-4 rounded-xl border">
 
 <p>
-<span className="font-semibold">Pincode:</span>
-{" "}
+<span className="font-semibold">Pincode:</span>{" "}
 {ownerData.pincode}
 </p>
 
 <p className="mt-2">
-<span className="font-semibold">Address:</span>
-{" "}
+<span className="font-semibold">Address:</span>{" "}
 {ownerData.address}
 </p>
 
@@ -228,41 +214,30 @@ className="bg-white border rounded-2xl shadow-sm p-6 hover:border-[#F4B400]"
 >
 
 <h4 className="text-lg font-semibold mb-2">
-
-🚚 {vehicle.vehicleNumber || "Vehicle"}
-
+{vehicle.vehicleNumber || "Vehicle"}
 </h4>
 
-
 <p className="text-gray-600">
-
 <span className="font-medium text-gray-800">
 Type:
 </span>{" "}
 {vehicle.vehicleType || "N/A"}
-
 </p>
 
-
 <p className="text-gray-600">
-
 <span className="font-medium text-gray-800">
 Capacity:
 </span>{" "}
 {vehicle.capacity || "0"} tons
-
 </p>
-
 
 {vehicle.rcNumber && (
 
 <p className="text-gray-600">
-
 <span className="font-medium text-gray-800">
 RC Number:
 </span>{" "}
 {vehicle.rcNumber}
-
 </p>
 
 )}
@@ -276,12 +251,24 @@ RC Number:
 ) : (
 
 <div className="bg-[#FAFAFA] p-6 rounded-xl border text-center text-gray-500">
-
 No vehicles registered yet
-
 </div>
 
 )}
+
+</div>
+
+
+{/* ================= EDIT PROFILE BUTTON (BOTTOM) ================= */}
+
+<div className="mt-10">
+
+<button
+onClick={() => router.push("/owner/edit-profile")}
+className="w-full border-2 border-[#F4B400] bg-white text-black py-3 rounded-xl font-semibold hover:bg-[#EAD7A1] transition duration-200"
+>
+Edit Profile
+</button>
 
 </div>
 

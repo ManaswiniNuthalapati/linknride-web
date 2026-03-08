@@ -65,37 +65,68 @@ export default function DriverOnboard() {
   };
 
   const handleSubmit = async () => {
-    const userId = uid || auth.currentUser?.uid;
-    if (!userId) return alert("Please login again");
+  const userId = uid || auth.currentUser?.uid;
+  if (!userId) return alert("Please login again");
 
-    try {
-      setSaving(true);
+  /* ✅ FORM VALIDATION */
 
-      let aadharUrl = null;
-      let licenseUrl = null;
+  if (!form.fullName.trim())
+    return alert("Please enter Full Name");
 
-      if (aadharFile) aadharUrl = await uploadFile(userId, aadharFile, "drivers/aadhar");
-      if (licenseFile) licenseUrl = await uploadFile(userId, licenseFile, "drivers/license");
+  if (!form.phone || form.phone.length !== 10)
+    return alert("Please enter valid 10 digit phone number");
 
-      await setDoc(doc(db, "drivers", userId), {
-        ...form,
-        age: Number(form.age),
-        experience: Number(form.experience),
-        aadharUrl,
-        licenseUrl,
-        role: "driver",
-        createdAt: serverTimestamp(),
-      });
+  if (!form.pincode || form.pincode.length !== 6)
+    return alert("Please enter valid pincode");
 
-      alert("Profile saved!");
-      router.push("/driver/dashboard");
-    } catch {
-      alert("Failed to save profile");
-    } finally {
-      setSaving(false);
-    }
-  };
+  if (!form.city)
+    return alert("City not detected from pincode");
 
+  if (!form.age)
+    return alert("Please enter age");
+
+  if (Number(form.age) < 18)
+    return alert("Driver must be at least 18 years old");
+
+  if (!form.experience)
+    return alert("Please enter experience");
+
+  if (!form.address.trim())
+    return alert("Please enter address");
+
+  try {
+    setSaving(true);
+
+    let aadharUrl = null;
+    let licenseUrl = null;
+
+    /* Upload only if user selected files */
+
+    if (aadharFile)
+      aadharUrl = await uploadFile(userId, aadharFile, "drivers/aadhar");
+
+    if (licenseFile)
+      licenseUrl = await uploadFile(userId, licenseFile, "drivers/license");
+
+    await setDoc(doc(db, "drivers", userId), {
+      ...form,
+      age: Number(form.age),
+      experience: Number(form.experience),
+      aadharUrl,
+      licenseUrl,
+      role: "driver",
+      createdAt: serverTimestamp(),
+    });
+
+    alert("Profile saved!");
+    router.push("/driver/dashboard");
+
+  } catch {
+    alert("Failed to save profile");
+  } finally {
+    setSaving(false);
+  }
+};
   return (
     <div className="min-h-screen flex flex-col bg-[#FAFAFA]">
 
@@ -120,6 +151,20 @@ export default function DriverOnboard() {
           <div className="grid md:grid-cols-2 gap-6">
             <Input label="Full Name" value={form.fullName} onChange={(v)=>handleChange("fullName",v)}/>
 
+{/* PHONE NUMBER */}
+<div>
+  <label className="font-semibold">Phone Number</label>
+  <input
+    value={form.phone}
+    maxLength={10}
+    onChange={(e)=>{
+      const value = e.target.value.replace(/\D/g,""); // only numbers
+      if(value.length<=10) handleChange("phone",value);
+    }}
+    className="w-full mt-1 px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-[#F4B400]"
+    placeholder="Enter 10 digit phone"
+  />
+</div>
             {/* PINCODE */}
             <div>
               <label className="font-semibold">Pincode</label>

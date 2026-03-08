@@ -12,13 +12,14 @@ import {
   FaHistory,
   FaUser,
   FaBell,
-  FaIdBadge,
-  FaUserCircle
+  FaUserCircle,
+  FaBars
 } from "react-icons/fa";
 
 import Image from "next/image";
 
 /* VEHICLE NUMBER VALIDATION */
+
 const isValidVehicleNumber = (num: string) => {
   return /^[A-Z]{2}\d{2}[A-Z]{1,2}\d{4}$/.test(num.toUpperCase());
 };
@@ -26,6 +27,8 @@ const isValidVehicleNumber = (num: string) => {
 export default function PostVehicle() {
 
   const router = useRouter();
+
+  const [sidebarOpen,setSidebarOpen] = useState(false);
   const [menuOpen,setMenuOpen] = useState(false);
 
   const [form,setForm] = useState({
@@ -107,74 +110,68 @@ export default function PostVehicle() {
 
   return(
 
-<div className="min-h-screen flex bg-[#FAFAFA] text-[#111]">
+<div className="min-h-screen bg-[#FAFAFA] text-[#111]">
 
 {/* SIDEBAR */}
 
-<aside className="w-64 bg-[#0B0B0B] text-white flex flex-col py-6 px-4">
+<div
+className={`fixed top-0 left-0 h-full w-64 bg-[#0B0B0B] text-white transform ${
+sidebarOpen ? "translate-x-0" : "-translate-x-full"
+} transition-transform duration-300 z-50`}
+>
 
-<div className="mb-8">
-<h2 className="text-xl font-bold">
-<span className="text-white">LINK</span>
+<div className="py-6 px-5">
+
+<h2 className="text-xl font-bold mb-8">
+<span>LINK</span>
 <span className="text-[#F4B400]">N</span>
-<span className="text-white">RIDE</span>
+<span>RIDE</span>
 </h2>
-<p className="text-sm text-gray-400">Owner Panel</p>
-</div>
 
 <nav className="flex flex-col gap-2 text-sm">
 
-<button onClick={()=>router.push("/owner/dashboard")}
-className="nav-btn">
-<FaHome/> Dashboard
-</button>
-
-<button onClick={()=>router.push("/owner/hire-drivers")}
-className="nav-btn">
-<FaUserTie/> Hire Drivers
-</button>
-
-<button onClick={()=>router.push("/owner/active-requests")}
-className="nav-btn">
-<FaSyncAlt/> Active Requests
-</button>
-
-<button onClick={()=>router.push("/owner/ongoing-trips")}
-className="nav-btn">
-<FaRoute/> Ongoing Trips
-</button>
-
-<button onClick={()=>router.push("/owner/trip-history")}
-className="nav-btn">
-<FaHistory/> Trip History
-</button>
-
-<button onClick={()=>router.push("/owner/profile")}
-className="nav-btn">
-<FaUser/> Profile
-</button>
-
-<button onClick={()=>router.push("/owner/notifications")}
-className="nav-btn">
-<FaBell/> Notifications
-</button>
+<SidebarBtn icon={<FaHome/>} text="Dashboard" route="/owner/dashboard" router={router}/>
+<SidebarBtn icon={<FaUserTie/>} text="Hire Drivers" route="/owner/hire-drivers" router={router}/>
+<SidebarBtn icon={<FaSyncAlt/>} text="Active Requests" route="/owner/active-requests" router={router}/>
+<SidebarBtn icon={<FaRoute/>} text="Ongoing Trips" route="/owner/ongoing-trips" router={router}/>
+<SidebarBtn icon={<FaHistory/>} text="Trip History" route="/owner/trip-history" router={router}/>
+<SidebarBtn icon={<FaUser/>} text="Profile" route="/owner/profile" router={router}/>
+<SidebarBtn icon={<FaBell/>} text="Notifications" route="/owner/notifications" router={router}/>
 
 </nav>
 
-</aside>
+</div>
 
+</div>
 
-{/* MAIN AREA */}
+{/* OVERLAY */}
 
-<div className="flex-1 flex flex-col">
+{sidebarOpen && (
 
+<div
+className="fixed inset-0 bg-black/40 z-40"
+onClick={()=>setSidebarOpen(false)}
+></div>
+
+)}
 
 {/* HEADER */}
 
-<header className="bg-white border-b px-10 py-4 flex justify-between items-center">
+<header className="bg-white border-b px-8 py-4 flex justify-between items-center">
 
-<div onClick={()=>router.push("/owner/dashboard")}
-className="flex items-center gap-3 cursor-pointer">
+<div className="flex items-center gap-4">
+
+<button
+onClick={()=>setSidebarOpen(true)}
+className="text-2xl"
+>
+<FaBars/>
+</button>
+
+<div
+onClick={()=>router.push("/owner/dashboard")}
+className="flex items-center gap-3 cursor-pointer"
+>
 
 <Image
 src="/logo.jpg"
@@ -184,31 +181,37 @@ height={36}
 className="rounded-full"
 />
 
-<h1 className="text-xl font-bold text-black">
+<h1 className="text-xl font-bold">
 LINK<span className="text-[#F4B400]">N</span>RIDE
 </h1>
 
 </div>
 
+</div>
+
+
+{/* USER MENU */}
 
 <div className="relative">
 
 <button
 onClick={()=>setMenuOpen(!menuOpen)}
-className="flex items-center gap-2">
+className="flex items-center gap-2"
+>
 
-<FaUserCircle className="text-3xl text-black"/>
-<span className="text-sm">Owner ▾</span>
+<FaUserCircle className="text-3xl text-[#F4B400]" />
+
 
 </button>
 
 {menuOpen &&(
 
-<div className="absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-lg">
+<div className="absolute right-0 mt-2 w-44 bg-white border rounded-lg shadow-lg">
 
 <button
 onClick={()=>router.push("/owner/profile")}
-className="dropdown">
+className="dropdown"
+>
 View Profile
 </button>
 
@@ -217,7 +220,8 @@ onClick={()=>{
 localStorage.clear();
 router.push("/login");
 }}
-className="dropdown text-red-600">
+className="dropdown text-red-600"
+>
 Logout
 </button>
 
@@ -235,7 +239,7 @@ Logout
 <motion.section
 initial={{opacity:0,y:20}}
 animate={{opacity:1,y:0}}
-className="flex-grow px-10 py-12"
+className="px-8 py-12"
 >
 
 <div className="max-w-3xl mx-auto bg-white shadow rounded-2xl p-8">
@@ -248,56 +252,13 @@ Add Vehicle Availability
 
 <div className="grid md:grid-cols-2 gap-6">
 
-<Input
-label="Vehicle Number *"
-name="vehicleNumber"
-value={form.vehicleNumber}
-onChange={handleChange}
-/>
-
-<Select
-label="Vehicle Type"
-name="vehicleType"
-value={form.vehicleType}
-onChange={handleChange}
-/>
-
-<Input
-label="Capacity (tons)"
-name="capacity"
-value={form.capacity}
-onChange={handleChange}
-/>
-
-<Input
-label="Pickup Location *"
-name="pickupLocation"
-value={form.pickupLocation}
-onChange={handleChange}
-/>
-
-<Input
-label="Drop Location *"
-name="dropLocation"
-value={form.dropLocation}
-onChange={handleChange}
-/>
-
-<Input
-type="date"
-label="Available Date *"
-name="availableDate"
-value={form.availableDate}
-onChange={handleChange}
-/>
-
-<Input
-type="time"
-label="Available Time"
-name="availableTime"
-value={form.availableTime}
-onChange={handleChange}
-/>
+<Input label="Vehicle Number *" name="vehicleNumber" value={form.vehicleNumber} onChange={handleChange}/>
+<Select label="Vehicle Type" name="vehicleType" value={form.vehicleType} onChange={handleChange}/>
+<Input label="Capacity (tons)" name="capacity" value={form.capacity} onChange={handleChange}/>
+<Input label="Pickup Location *" name="pickupLocation" value={form.pickupLocation} onChange={handleChange}/>
+<Input label="Drop Location *" name="dropLocation" value={form.dropLocation} onChange={handleChange}/>
+<Input type="date" label="Available Date *" name="availableDate" value={form.availableDate} onChange={handleChange}/>
+<Input type="time" label="Available Time" name="availableTime" value={form.availableTime} onChange={handleChange}/>
 
 </div>
 
@@ -305,7 +266,7 @@ onChange={handleChange}
 
 <button
 type="submit"
-className="mt-8 w-full bg-[#F4B400] hover:bg-[#e0a800] text-black py-3 rounded-xl font-semibold"
+className="mt-8 w-full border-2 border-[#F4B400] bg-white text-black py-3 rounded-xl font-semibold hover:bg-[#EAD7A1] transition duration-200"
 >
 {loading ? "Posting..." : "Post Vehicle"}
 </button>
@@ -323,23 +284,7 @@ className="mt-8 w-full bg-[#F4B400] hover:bg-[#e0a800] text-black py-3 rounded-x
 © {new Date().getFullYear()} LinknRide
 </footer>
 
-</div>
-
 <style jsx>{`
-
-.nav-btn{
-display:flex;
-gap:10px;
-align-items:center;
-padding:12px;
-border-radius:8px;
-color:#ccc;
-}
-
-.nav-btn:hover{
-background:#F4B40020;
-color:#F4B400;
-}
 
 .dropdown{
 display:block;
@@ -358,12 +303,35 @@ background:#f3f3f3;
 );
 }
 
-/* INPUT COMPONENT */
+
+/* SIDEBAR BUTTON */
+
+function SidebarBtn({icon,text,route,router}:any){
+
+return(
+
+<button
+onClick={()=>router.push(route)}
+className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[#F4B40020] hover:text-[#F4B400] transition"
+>
+{icon} {text}
+</button>
+
+);
+
+}
+
+
+/* INPUT */
 
 function Input({label,name,value,onChange,type="text"}:any){
+
 return(
+
 <div>
+
 <label className="block mb-2 font-medium">{label}</label>
+
 <input
 type={type}
 name={name}
@@ -371,29 +339,42 @@ value={value}
 onChange={onChange}
 className="w-full border rounded-lg px-4 py-2 focus:border-[#F4B400] outline-none"
 />
+
 </div>
+
 );
+
 }
+
 
 /* SELECT */
 
 function Select({label,name,value,onChange}:any){
+
 return(
+
 <div>
+
 <label className="block mb-2 font-medium">{label}</label>
+
 <select
 name={name}
 value={value}
 onChange={onChange}
 className="w-full border rounded-lg px-4 py-2 focus:border-[#F4B400]"
 >
+
 <option value="">Select Type</option>
 <option>Truck</option>
 <option>Mini Truck</option>
 <option>Tempo</option>
 <option>Pickup</option>
 <option>Container</option>
+
 </select>
+
 </div>
+
 );
+
 }
