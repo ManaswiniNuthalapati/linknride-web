@@ -2,7 +2,12 @@ import Layout from "../components/Layout";
 import { motion } from "framer-motion";
 import { useRouter } from "next/router";
 import { useState } from "react";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import {
+  doc,
+  setDoc,
+  getDoc,
+  serverTimestamp
+} from "firebase/firestore";
 import { db } from "../firebaseConfig";
 
 export default function OTPPage() {
@@ -28,22 +33,39 @@ export default function OTPPage() {
       const result = await window.confirmationResult.confirm(otp);
       const user = result.user;
 
-      await setDoc(
-        doc(db, "users", user.uid),
-        {
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+
+      // ⭐ Only create user if it does not exist
+      if (!userSnap.exists()) {
+        await setDoc(userRef, {
           uid: user.uid,
           phone: user.phoneNumber,
           role: null,
           profileCompleted: false,
           createdAt: serverTimestamp(),
-        },
-        { merge: true }
-      );
+        });
+      }
 
+      // Save login locally
       localStorage.setItem("linknride_uid", user.uid);
       localStorage.setItem("linknride_phone", user.phoneNumber || "");
 
-      router.push("/role-select");
+      // ⭐ Redirect based on existing role
+      const existingUser = await getDoc(userRef);
+
+      if (existingUser.exists()) {
+        const data: any = existingUser.data();
+
+        if (data.role) {
+          router.push(`/${data.role}/dashboard`);
+        } else {
+          router.push("/role-select");
+        }
+      } else {
+        router.push("/role-select");
+      }
+
     } catch (error) {
       console.error(error);
       alert("❌ Invalid OTP. Try again.");
@@ -55,7 +77,6 @@ export default function OTPPage() {
   return (
     <Layout title="Verify OTP">
 
-      {/* BACKGROUND */}
       <div className="min-h-screen flex items-center justify-center bg-[#FAFAFA] px-4">
 
         <motion.div
@@ -65,7 +86,6 @@ export default function OTPPage() {
           className="w-full max-w-sm bg-white p-10 rounded-2xl shadow-xl border-2 border-gray-200"
         >
 
-          {/* TITLE */}
           <h1 className="text-3xl font-extrabold text-center mb-2">
             <span className="text-black">Verify </span>
             <span className="text-[#F4B400]">OTP</span>
@@ -75,7 +95,6 @@ export default function OTPPage() {
             Enter the 6-digit OTP sent to your phone
           </p>
 
-          {/* OTP INPUT */}
           <input
             type="text"
             maxLength={6}
@@ -85,7 +104,6 @@ export default function OTPPage() {
             placeholder="••••••"
           />
 
-          {/* VERIFY BUTTON */}
           <button
             onClick={handleVerify}
             disabled={verifying}
@@ -98,7 +116,6 @@ export default function OTPPage() {
             {verifying ? "Verifying..." : "Verify OTP"}
           </button>
 
-          {/* HELP TEXT */}
           <p className="text-center text-sm text-gray-500 mt-6">
             Didn’t receive OTP?{" "}
             <span className="text-[#F4B400] font-semibold cursor-pointer">
@@ -108,6 +125,7 @@ export default function OTPPage() {
 
         </motion.div>
       </div>
+
     </Layout>
   );
 }

@@ -1,7 +1,7 @@
 import { motion, Variants } from "framer-motion";
 import { useRouter } from "next/router";
 import { User, Truck, UserCircle2, ArrowRight } from "lucide-react";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { db } from "../firebaseConfig";
 import Image from "next/image";
 
@@ -17,6 +17,7 @@ const cardVariants: Variants = {
 
 export default function RoleSelect() {
   const router = useRouter();
+
   const uid =
     typeof window !== "undefined"
       ? localStorage.getItem("linknride_uid")
@@ -53,9 +54,29 @@ export default function RoleSelect() {
     }
 
     try {
+      // Save role in Firestore
       await updateDoc(doc(db, "users", uid), { role: roleId });
-      router.push(`/onboard/${roleId}`);
-    } catch {
+
+      // ⭐ Save role locally so auto-login works
+      localStorage.setItem("linknride_role", roleId);
+
+      // Check if profile already completed
+      const docRef = doc(db, "users", uid);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const data: any = docSnap.data();
+
+        if (data.profileCompleted) {
+          // Go directly to dashboard
+          router.push(`/${roleId}/dashboard`);
+        } else {
+          // Continue onboarding
+          router.push(`/onboard/${roleId}`);
+        }
+      }
+    } catch (error) {
+      console.error(error);
       alert("Failed to set role");
     }
   };
@@ -63,13 +84,19 @@ export default function RoleSelect() {
   return (
     <div className="min-h-screen flex flex-col bg-[#FAFAFA]">
 
-      {/* ⭐ HEADER (BLACK + YELLOW) */}
+      {/* HEADER */}
       <header className="bg-[#0B0B0B] px-10 py-4 flex justify-between items-center">
         <div
           onClick={() => router.push("/")}
           className="flex items-center gap-3 cursor-pointer"
         >
-          <Image src="/logo.jpg" alt="logo" width={45} height={45} className="rounded-full" />
+          <Image
+            src="/logo.jpg"
+            alt="logo"
+            width={45}
+            height={45}
+            className="rounded-full"
+          />
           <h1 className="text-2xl font-extrabold tracking-wider">
             <span className="text-white">LINK</span>
             <span className="text-[#F4B400]">N</span>
@@ -78,7 +105,7 @@ export default function RoleSelect() {
         </div>
       </header>
 
-      {/* PAGE BODY */}
+      {/* BODY */}
       <div className="flex-grow py-20 px-6">
 
         <div className="text-center mb-14">
@@ -146,11 +173,12 @@ export default function RoleSelect() {
         </p>
       </div>
 
-      {/* ⭐ FOOTER (BLACK + YELLOW) */}
+      {/* FOOTER */}
       <footer className="bg-[#0B0B0B] text-white text-center py-4">
         © {new Date().getFullYear()}{" "}
         <span className="text-[#F4B400] font-semibold">LinknRide</span>
       </footer>
+
     </div>
   );
 }
