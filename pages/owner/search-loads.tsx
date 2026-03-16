@@ -34,6 +34,10 @@ type LoadItem = {
   price?: number;
   customerId?: string;
   typeOfGoods?: string;
+
+  status?: string;
+  lockedBy?: string;
+  lockExpiresAt?: number;
 };
 
 export default function OwnerSearchLoads() {
@@ -42,57 +46,71 @@ export default function OwnerSearchLoads() {
 
   const [search, setSearch] = useState({ pickup: "", drop: "" });
   const [loads, setLoads] = useState<LoadItem[]>([]);
-  const [loading, setLoading] = useState(false);
-
   const [selectedLoad,setSelectedLoad] = useState<LoadItem | null>(null);
   const [bidPrice,setBidPrice] = useState(0);
 
+  const ownerId =
+    typeof window !== "undefined"
+      ? localStorage.getItem("linknride_uid")
+      : null;
+
   useEffect(()=>{
-    const uid = localStorage.getItem("linknride_uid");
-    if(!uid) router.push("/login");
-  },[router]);
+    if(!ownerId) router.push("/login");
+  },[router,ownerId]);
 
   /* FETCH LOADS */
 
   useEffect(()=>{
-
-    setLoading(true);
 
     const loadsRef = collection(db,"loads");
 
     let q:any = query(loadsRef,orderBy("createdAt","desc"));
 
     if(search.pickup && search.drop){
-
       q = query(
         loadsRef,
         where("pickup","==",search.pickup),
         where("drop","==",search.drop),
         orderBy("createdAt","desc")
       );
-
     }
 
     const unsub = onSnapshot(q,(snap)=>{
+
+      const now = Date.now();
 
       const items:LoadItem[] = snap.docs.map((d)=>({
         id:d.id,
         ...(d.data() as any)
       }));
 
-      setLoads(items);
-      setLoading(false);
+      /* Hide locked loads from other owners */
+
+      const visibleLoads = items.filter(load => {
+
+        if(load.status !== "locked") return true;
+
+        if(load.lockedBy === ownerId) return true;
+
+        if(load.lockExpiresAt && load.lockExpiresAt < now) return true;
+
+        return false;
+
+      });
+
+      setLoads(visibleLoads);
 
     });
 
     return ()=>unsub();
 
-  },[search]);
+  },[search,ownerId]);
 
   const handleChange = (e:any)=>
     setSearch({...search,[e.target.name]:e.target.value});
 
   const handleSearch = (e:any)=>e.preventDefault();
+
 
   /* ACCEPT LOAD */
 
@@ -100,49 +118,35 @@ export default function OwnerSearchLoads() {
 
     try{
 
-      const ownerId = localStorage.getItem("linknride_uid");
       if(!ownerId) return;
 
-      const commission = Math.round(price*0.05);
-      const ownerEarning = Math.round(price*0.95);
+      const commission = Math.round(price * 0.05);
+      const ownerEarning = Math.round(price * 0.95);
 
-      const existingQuery = query(
-        collection(db,"requests"),
-        where("loadId","==",load.id),
-        where("ownerId","==",ownerId)
-      );
+      const now = Date.now();
+      const lockExpiresAt = now + (30 * 60 * 1000);
 
-      const snap = await getDocs(existingQuery);
+      /* LOCK LOAD */
 
-      if(!snap.empty){
+      await updateDoc(doc(db,"loads",load.id),{
+        status:"locked",
+        lockedBy:ownerId,
+        lockExpiresAt
+      });
 
-        const requestId = snap.docs[0].id;
-
-        await updateDoc(doc(db,"requests",requestId),{
-          status:"accepted",
-          finalPrice:price,
-          commission,
-          ownerEarning,
-          lastAction:"owner",
-          updatedAt:serverTimestamp()
-        });
-
-        router.push("/owner/my-requests");
-        return;
-
-      }
+      /* CREATE CUSTOMER REQUEST */
 
       await addDoc(collection(db,"requests"),{
         loadId:load.id,
         customerId:load.customerId,
         ownerId,
-        status:"accepted",
-        finalPrice:price,
+        ownerPrice:price,
+        customerPrice:load.price,
         commission,
         ownerEarning,
-        lastAction:"owner",
+        status:"pending",
         createdAt:serverTimestamp(),
-        updatedAt:serverTimestamp()
+        lockExpiresAt
       });
 
       router.push("/owner/my-requests");
@@ -183,6 +187,7 @@ export default function OwnerSearchLoads() {
 
       </header>
 
+
       {/* SEARCH */}
 
       <motion.form
@@ -215,6 +220,7 @@ export default function OwnerSearchLoads() {
         </div>
 
       </motion.form>
+
 
       {/* LOAD CARDS */}
 
@@ -254,19 +260,15 @@ export default function OwnerSearchLoads() {
               Customer Price: ₹ {load.price}
             </p>
 
-            <div className="flex gap-3">
-
-              <button
-                onClick={()=>{
-                  setSelectedLoad(load);
-                  setBidPrice(load.price || 0);
-                }}
-                className="flex-1 py-3 rounded-xl border-2 border-gray-300 font-semibold hover:bg-gray-100"
-              >
-                View Details
-              </button>
-
-            </div>
+            <button
+              onClick={()=>{
+                setSelectedLoad(load);
+                setBidPrice(load.price || 0);
+              }}
+              className="w-full py-3 rounded-xl border-2 border-gray-300 font-semibold hover:bg-gray-100"
+            >
+              View Details
+            </button>
 
           </motion.div>
 
@@ -274,108 +276,97 @@ export default function OwnerSearchLoads() {
 
       </div>
 
+
       {/* MODAL */}
 
       {selectedLoad && (
 
-<div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+      <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
 
-  <div className="bg-white w-[420px] rounded-2xl shadow-xl p-8">
+        <div className="bg-white w-[420px] rounded-2xl shadow-xl p-8">
 
-    {/* TITLE */}
-    <h2 className="text-2xl font-bold mb-6 text-center">
-      Load Details
-    </h2>
+          <h2 className="text-2xl font-bold mb-6 text-center">
+            Load Details
+          </h2>
 
-    {/* ROUTE */}
-    <div className="bg-gray-50 rounded-lg p-4 mb-6">
+          <div className="bg-gray-50 rounded-lg p-4 mb-6">
 
-      <p className="text-gray-600 text-sm">
-        Route
-      </p>
+            <p className="text-gray-600 text-sm">Route</p>
 
-      <p className="font-semibold text-lg">
-        {selectedLoad.pickup} → {selectedLoad.drop}
-      </p>
+            <p className="font-semibold text-lg">
+              {selectedLoad.pickup} → {selectedLoad.drop}
+            </p>
 
-    </div>
+          </div>
 
-    {/* CUSTOMER PRICE */}
-    <div className="mb-6">
+          <div className="mb-6">
 
-      <p className="text-sm text-gray-500">
-        Customer Price
-      </p>
+            <p className="text-sm text-gray-500">Customer Price</p>
 
-      <p className="text-2xl font-bold text-[#F4B400]">
-        ₹{selectedLoad.price}
-      </p>
+            <p className="text-2xl font-bold text-[#F4B400]">
+              ₹{selectedLoad.price}
+            </p>
 
-    </div>
+          </div>
 
-    {/* SLIDER */}
+          <div className="mb-6">
 
-    <div className="mb-6">
+            <input
+              type="range"
+              min={selectedLoad.price || 0}
+              max={Math.round((selectedLoad.price || 0) * 1.1)}
+              value={bidPrice}
+              onChange={(e)=>setBidPrice(Number(e.target.value))}
+              className="w-full accent-[#F4B400]"
+            />
 
-      <input
-        type="range"
-        min={selectedLoad.price || 0}
-        max={Math.round((selectedLoad.price || 0) * 1.1)}
-        value={bidPrice}
-        onChange={(e)=>setBidPrice(Number(e.target.value))}
-        className="w-full accent-[#F4B400]"
-      />
+          </div>
 
-    </div>
+          <div className="bg-gray-50 rounded-lg p-4 mb-6 space-y-2">
 
-    {/* PRICE BREAKDOWN */}
+            <div className="flex justify-between">
+              <span>Your Price</span>
+              <span className="font-semibold">₹{bidPrice}</span>
+            </div>
 
-    <div className="bg-gray-50 rounded-lg p-4 mb-6 space-y-2">
+            <div className="flex justify-between text-gray-600">
+              <span>Platform Fee (5%)</span>
+              <span>₹{Math.round(bidPrice*0.05)}</span>
+            </div>
 
-      <div className="flex justify-between">
-        <span>Your Price</span>
-        <span className="font-semibold">₹{bidPrice}</span>
+            <div className="flex justify-between font-bold text-lg">
+              <span>Your Earnings</span>
+              <span className="text-green-600">
+                ₹{Math.round(bidPrice*0.95)}
+              </span>
+            </div>
+
+          </div>
+
+          <div className="flex gap-4">
+
+            <button
+              onClick={()=>setSelectedLoad(null)}
+              className="flex-1 py-3 rounded-lg border border-gray-300 hover:bg-gray-100"
+            >
+              Cancel
+            </button>
+
+            <button
+              onClick={()=>handleAcceptLoad(selectedLoad,bidPrice)}
+              className="flex-1 py-3 rounded-lg bg-[#F4B400] font-semibold hover:bg-[#e0a800]"
+            >
+              Accept Load
+            </button>
+
+          </div>
+
+        </div>
+
       </div>
 
-      <div className="flex justify-between text-gray-600">
-        <span>Platform Fee (5%)</span>
-        <span>₹{Math.round(bidPrice*0.02)}</span>
-      </div>
+      )}
 
-      <div className="flex justify-between font-bold text-lg">
-        <span>Your Earnings</span>
-        <span className="text-green-600">
-          ₹{Math.round(bidPrice*0.98)}
-        </span>
-      </div>
-
-    </div>
-
-    {/* BUTTONS */}
-
-    <div className="flex gap-4">
-
-      <button
-        onClick={()=>setSelectedLoad(null)}
-        className="flex-1 py-3 rounded-lg border border-gray-300 hover:bg-gray-100"
-      >
-        Cancel
-      </button>
-
-      <button
-        onClick={()=>handleAcceptLoad(selectedLoad,bidPrice)}
-        className="flex-1 py-3 rounded-lg bg-[#F4B400] font-semibold hover:bg-[#e0a800]"
-      >
-        Accept Load
-      </button>
-
-    </div>
-
-  </div>
-
-</div>
-
-)}
       <footer className="bg-[#0B0B0B] text-white text-center text-sm py-4">
         © {new Date().getFullYear()} <span className="text-[#F4B400] font-semibold">LinknRide</span>
       </footer>

@@ -8,220 +8,307 @@ import {
   getDoc,
   orderBy,
   updateDoc,
-  arrayUnion,
   onSnapshot,
 } from "firebase/firestore";
-import { motion, AnimatePresence } from "framer-motion";
+
+import { motion } from "framer-motion";
 import { useRouter } from "next/router";
 import Image from "next/image";
 
 export default function OwnerMyRequests() {
-  const router = useRouter();
-  const [requests, setRequests] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [selectedRequest, setSelectedRequest] = useState<any>(null);
-  const [newPrice, setNewPrice] = useState("");
 
-  // 🔄 Real-time fetch
-  useEffect(() => {
+  const router = useRouter();
+
+  const [requests,setRequests] = useState<any[]>([]);
+  const [loading,setLoading] = useState(true);
+  const [timeLeft,setTimeLeft] = useState<{[key:string]:number}>({});
+
+  /* FETCH OWNER REQUESTS */
+
+  useEffect(()=>{
+
     const uid = localStorage.getItem("linknride_uid");
-    if (!uid) return;
+    if(!uid) return;
 
     const q = query(
-      collection(db, "requests"),
-      where("ownerId", "==", uid),
-      orderBy("createdAt", "desc")
+      collection(db,"requests"),
+      where("ownerId","==",uid),
+      orderBy("createdAt","desc")
     );
 
-    const unsubscribe = onSnapshot(q, async (reqSnap) => {
-      const temp: any[] = [];
+    const unsub = onSnapshot(q, async(reqSnap)=>{
 
-      for (const docSnap of reqSnap.docs) {
+      const temp:any[] = [];
+
+      for(const docSnap of reqSnap.docs){
+
         const reqData = docSnap.data();
-        let loadData = null;
+        let loadData:any = null;
 
-        if (reqData.loadId) {
-          const loadRef = doc(db, "loads", reqData.loadId);
-          const loadSnap = await getDoc(loadRef);
-          if (loadSnap.exists()) loadData = loadSnap.data();
+        if(reqData.loadId){
+
+          const loadSnap = await getDoc(doc(db,"loads",reqData.loadId));
+
+          if(loadSnap.exists()){
+            loadData = loadSnap.data();
+          }
+
         }
 
-        if (!loadData?.pickup || !loadData?.drop) continue;
+        if(!loadData) continue;
 
-        temp.push({ id: docSnap.id, ...reqData, load: loadData });
+        temp.push({
+          id:docSnap.id,
+          ...reqData,
+          load:loadData
+        });
+
       }
 
       setRequests(temp);
       setLoading(false);
+
     });
 
-    return () => unsubscribe();
-  }, []);
+    return ()=>unsub();
 
-  const handleAccept = async (id: string, finalPrice: number) => {
-    await updateDoc(doc(db, "requests", id), {
-      status: "accepted",
-      finalPrice,
-      lastAction: "owner",
-      updatedAt: new Date(),
-    });
-    alert("Bid Accepted");
+  },[]);
+
+
+
+  /* COUNTDOWN TIMER */
+
+  useEffect(()=>{
+
+    const interval = setInterval(()=>{
+
+      const updated:any = {};
+
+      requests.forEach(r=>{
+
+        if(r.status !== "pending") return;
+        if(!r.load?.lockExpiresAt) return;
+
+        const remaining = r.load.lockExpiresAt - Date.now();
+
+        updated[r.id] = remaining > 0 ? remaining : 0;
+
+        /* AUTO UNLOCK WHEN TIMER ENDS */
+
+        if(remaining <= 0){
+
+          updateDoc(doc(db,"loads",r.loadId),{
+            status:"open",
+            lockedBy:null,
+            lockExpiresAt:null
+          });
+
+          updateDoc(doc(db,"requests",r.id),{
+            status:"expired"
+          });
+
+        }
+
+      });
+
+      setTimeLeft(updated);
+
+    },1000);
+
+    return ()=>clearInterval(interval);
+
+  },[requests]);
+
+
+  /* FORMAT TIMER */
+
+  const formatTime = (ms:number)=>{
+
+    const minutes = Math.floor(ms/60000);
+    const seconds = Math.floor((ms%60000)/1000);
+
+    return `${minutes}:${seconds.toString().padStart(2,"0")}`;
+
   };
 
-  const handleReject = async (id: string) => {
-    await updateDoc(doc(db, "requests", id), {
-      status: "rejected",
-      lastAction: "owner",
-      updatedAt: new Date(),
-    });
-    alert("Bid Rejected");
-  };
 
-  const openCounter = (req: any) => {
-    setSelectedRequest(req);
-    setShowModal(true);
-  };
+  return(
 
-  const submitCounter = async () => {
-    if (!selectedRequest || !newPrice) return;
+  <div className="min-h-screen flex flex-col bg-[#FAFAFA]">
 
-    await updateDoc(doc(db, "requests", selectedRequest.id), {
-      bids: arrayUnion({
-        by: "owner",
-        amount: Number(newPrice),
-        at: new Date(),
-      }),
-      status: "pending",
-      lastAction: "owner",
-      updatedAt: new Date(),
-    });
+    {/* HEADER */}
 
-    alert("New price sent!");
-    setShowModal(false);
-  };
+    <header className="bg-white border-b px-10 py-4 flex justify-between items-center">
 
-  return (
-    <div className="min-h-screen flex flex-col bg-[#FAFAFA]">
+      <div
+        onClick={()=>router.push("/owner/dashboard")}
+        className="flex items-center gap-3 cursor-pointer"
+      >
 
-      {/* HEADER */}
-      <header className="bg-white border-b px-10 py-4 flex justify-between items-center">
-        <div onClick={()=>router.push("/owner/dashboard")} className="flex items-center gap-3 cursor-pointer">
-          <Image src="/logo.jpg" alt="Logo" width={50} height={50} className="rounded-full"/>
-          <h1 className="text-3xl font-extrabold tracking-wider">
-            <span className="text-black">LINK</span>
-            <span className="text-[#F4B400]">N</span>
-            <span className="text-black">RIDE</span>
-          </h1>
-        </div>
+        <Image
+        src="/logo.jpg"
+        alt="Logo"
+        width={50}
+        height={50}
+        className="rounded-full"
+        />
 
-        <button onClick={()=>router.push("/owner/dashboard")} className="text-[#F4B400] font-semibold hover:underline">
-          ← Back to Dashboard
-        </button>
-      </header>
+        <h1 className="text-3xl font-extrabold tracking-wider">
+          <span className="text-black">LINK</span>
+          <span className="text-[#F4B400]">N</span>
+          <span className="text-black">RIDE</span>
+        </h1>
 
-      {/* CONTENT */}
-      <motion.section className="flex-grow px-10 py-10">
-        <h2 className="text-2xl font-bold text-center mb-10">
-          My Requests / Bids
-        </h2>
+      </div>
 
-        {loading ? (
-          <p className="text-center">Loading...</p>
-        ) : requests.length === 0 ? (
-          <p className="text-center text-gray-600">No requests yet.</p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {requests.map((r) => {
-              const lastBid = r.bids?.[r.bids.length - 1];
+      <button
+      onClick={()=>router.push("/owner/dashboard")}
+      className="text-[#F4B400] font-semibold hover:underline"
+      >
+      ← Back to Dashboard
+      </button>
 
-              return (
-                <motion.div
-                  key={r.id}
-                  whileHover={{ y: -6 }}
-                  className="bg-white rounded-2xl p-6 border-2 border-gray-200 hover:border-[#F4B400] transition shadow-sm hover:shadow-xl"
-                >
-                  <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-lg font-bold">
-                      {r.load.pickup} → {r.load.drop}
-                    </h3>
+    </header>
 
-                    <span className={`px-3 py-1 text-xs rounded-full font-semibold
-                      ${r.status==="accepted"?"bg-green-100 text-green-700":
-                        r.status==="rejected"?"bg-red-100 text-red-700":
-                        "bg-yellow-100 text-yellow-700"}`}>
-                      {r.status?.toUpperCase()}
-                    </span>
-                  </div>
 
-                  <div className="space-y-1 text-sm mt-3">
-                    {r.bids?.map((bid:any,i:number)=>(
-                      <div key={i} className={`font-semibold ${bid.by==="owner"?"text-black":"text-[#F4B400]"}`}>
-                        {bid.by==="owner"?"You":"Customer"} Bid: ₹ {bid.amount}
-                      </div>
-                    ))}
-                  </div>
+    {/* CONTENT */}
 
-                  <p className="mt-3 text-xs text-gray-500">
-                    Sent: {r.createdAt?.seconds ? new Date(r.createdAt.seconds*1000).toLocaleString() : "—"}
+    <motion.section className="flex-grow px-10 py-10">
+
+      <h2 className="text-2xl font-bold text-center mb-10">
+        My Active Requests
+      </h2>
+
+      {loading ? (
+
+        <p className="text-center">Loading...</p>
+
+      ) : requests.length===0 ? (
+
+        <p className="text-center text-gray-600">
+          No active requests.
+        </p>
+
+      ) : (
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+          {requests.map((r)=>{
+
+            const remaining = timeLeft[r.id] || 0;
+
+            const showPhone =
+              remaining <= (10 * 60 * 1000) && remaining > 0;
+
+            return(
+
+              <motion.div
+              key={r.id}
+              whileHover={{y:-6}}
+              className="bg-white rounded-2xl p-6 border-2 border-gray-200 hover:border-[#F4B400] transition shadow-sm hover:shadow-xl"
+              >
+
+                {/* TOP SECTION */}
+
+                <div className="flex justify-between items-center mb-2">
+
+                  <h3 className="text-lg font-bold">
+                    {r.load.pickup} → {r.load.drop}
+                  </h3>
+
+                  {/* STATUS BADGE */}
+
+                  <span className={`px-3 py-1 text-xs rounded-full font-semibold
+                    ${
+                      r.status === "accepted"
+                        ? "bg-green-100 text-green-700"
+                        : r.status === "rejected"
+                        ? "bg-red-100 text-red-700"
+                        : "bg-yellow-100 text-yellow-700"
+                    }
+                  `}>
+                    {r.status?.toUpperCase() || "PENDING"}
+                  </span>
+
+                </div>
+
+
+                {/* OWNER PRICE */}
+
+                <p className="text-sm text-gray-600">
+                  Owner Price: ₹{r.ownerPrice}
+                </p>
+
+
+                {/* TIMER */}
+
+                {remaining > 0 && r.status === "pending" && (
+
+                  <p className="mt-3 text-[#F4B400] font-semibold">
+                    Time Left: {formatTime(remaining)}
                   </p>
 
-                  {r.status==="pending" && r.lastAction==="customer" && (
-                    <div className="flex gap-3 mt-4">
-                      <button onClick={()=>handleAccept(r.id,lastBid.amount)}
-                        className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm">
-                        Accept
-                      </button>
+                )}
 
-                      <button onClick={()=>handleReject(r.id)}
-                        className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm">
-                        Reject
-                      </button>
 
-                      <button onClick={()=>openCounter(r)}
-                        className="bg-[#F4B400] text-black px-4 py-2 rounded-lg text-sm font-semibold">
-                        Bid Again
-                      </button>
-                    </div>
-                  )}
-                </motion.div>
-              );
-            })}
-          </div>
-        )}
-      </motion.section>
+                {/* REJECT MESSAGE */}
 
-      {/* MODAL */}
-      <AnimatePresence>
-        {showModal && (
-          <motion.div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-            <motion.div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
-              <h3 className="text-lg font-semibold mb-4">Enter New Price</h3>
+                {r.status === "rejected" && (
 
-              <input
-                type="number"
-                value={newPrice}
-                onChange={(e)=>setNewPrice(e.target.value)}
-                className="w-full border rounded-lg px-3 py-2 mb-4 focus:border-[#F4B400] focus:outline-none"
-              />
+                  <p className="mt-3 text-red-600 font-semibold">
+                    Request Rejected by Customer
+                  </p>
 
-              <div className="flex justify-end gap-3">
-                <button onClick={()=>setShowModal(false)} className="px-4 py-2 border rounded-lg">
-                  Cancel
-                </button>
-                <button onClick={submitCounter} className="px-4 py-2 bg-[#F4B400] text-black rounded-lg font-semibold">
-                  Send Bid
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+                )}
 
-      {/* FOOTER */}
-      <footer className="bg-[#0B0B0B] text-white text-center text-sm py-4">
-        © {new Date().getFullYear()} <span className="text-[#F4B400]">LinknRide</span>
-      </footer>
-    </div>
+
+                {/* CUSTOMER PHONE */}
+
+                {showPhone && (
+
+                  <div className="mt-4">
+
+                    <p className="text-sm text-gray-600">
+                      Customer Phone
+                    </p>
+
+                    <a
+                    href={`tel:${r.load.customerPhone}`}
+                    className="inline-block mt-2 bg-[#F4B400] px-4 py-2 rounded-lg font-semibold"
+                    >
+                    Call Customer
+                    </a>
+
+                  </div>
+
+                )}
+
+              </motion.div>
+
+            )
+
+          })}
+
+        </div>
+
+      )}
+
+    </motion.section>
+
+
+    {/* FOOTER */}
+
+    <footer className="bg-[#0B0B0B] text-white text-center text-sm py-4">
+
+      © {new Date().getFullYear()}{" "}
+      <span className="text-[#F4B400]">
+        LinknRide
+      </span>
+
+    </footer>
+
+  </div>
+
   );
+
 }

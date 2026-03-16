@@ -257,6 +257,7 @@ className="bg-[#F4B400] hover:bg-[#e0a800] text-black px-6 py-3 rounded-lg font-
               className="px-8 py-3 border-2 border-[#F4B400] text-[#F4B400] font-semibold rounded-xl hover:bg-[#FFF3CC]"
             >
               Cancel
+              
             </button>
             </div>
 
