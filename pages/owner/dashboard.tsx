@@ -239,6 +239,13 @@ Edit Profile
 </button>
 
 <button
+ onClick={()=>router.push("/owner/notifications")}
+ className="bg-[#F4B400] px-4 py-2 rounded-lg font-semibold"
+>
+Notifications
+</button>
+
+<button
 onClick={logout}
 className="block w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"
 >

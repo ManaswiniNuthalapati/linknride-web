@@ -43,11 +43,14 @@ type LoadItem = {
 export default function OwnerSearchLoads() {
 
   const router = useRouter();
+  const { loadId } = router.query;
+
 
   const [search, setSearch] = useState({ pickup: "", drop: "" });
   const [loads, setLoads] = useState<LoadItem[]>([]);
   const [selectedLoad,setSelectedLoad] = useState<LoadItem | null>(null);
   const [bidPrice,setBidPrice] = useState(0);
+  
 
   const ownerId =
     typeof window !== "undefined"
@@ -116,48 +119,72 @@ export default function OwnerSearchLoads() {
 
   const handleAcceptLoad = async (load:LoadItem,price:number)=>{
 
-    try{
+  try{
 
-      if(!ownerId) return;
+    if(!ownerId) return;
 
-      const commission = Math.round(price * 0.05);
-      const ownerEarning = Math.round(price * 0.95);
+    const commission = Math.round(price * 0.05);
+    const ownerEarning = Math.round(price * 0.95);
 
-      const now = Date.now();
-      const lockExpiresAt = now + (30 * 60 * 1000);
+    const now = Date.now();
+    const lockExpiresAt = now + (30 * 60 * 1000);
 
-      /* LOCK LOAD */
+    /* LOCK LOAD */
 
-      await updateDoc(doc(db,"loads",load.id),{
-        status:"locked",
-        lockedBy:ownerId,
-        lockExpiresAt
-      });
+    await updateDoc(doc(db,"loads",load.id),{
+      status:"locked",
+      lockedBy:ownerId,
+      lockExpiresAt
+    });
 
-      /* CREATE CUSTOMER REQUEST */
+    /* CREATE CUSTOMER REQUEST */
 
-      await addDoc(collection(db,"requests"),{
-        loadId:load.id,
-        customerId:load.customerId,
-        ownerId,
-        ownerPrice:price,
-        customerPrice:load.price,
-        commission,
-        ownerEarning,
-        status:"pending",
-        createdAt:serverTimestamp(),
-        lockExpiresAt
-      });
+    await addDoc(collection(db,"requests"),{
+      loadId:load.id,
+      customerId:load.customerId,
+      ownerId,
+      ownerPrice:price,
+      customerPrice:load.price,
+      commission,
+      ownerEarning,
+      status:"pending",
+      createdAt:serverTimestamp(),
+      lockExpiresAt
+    });
 
-      router.push("/owner/my-requests");
+    /* GET OWNER NAME */
 
-    }catch(err){
-      console.error(err);
-      alert("Error accepting load");
-    }
+    const userSnap = await getDocs(
+      query(collection(db,"users"), where("uid","==",ownerId))
+    );
 
-  };
+    let ownerName = "Owner";
 
+    userSnap.forEach((doc)=>{
+      ownerName = doc.data()?.profile?.fullName || "Owner";
+    });
+
+    /* SEND CUSTOMER NOTIFICATION */
+
+    await addDoc(collection(db,"notifications"),{
+      userId:load.customerId,
+      ownerName:ownerName,
+      message:`${ownerName} accepted your load`,
+      pickup:load.pickup,
+      drop:load.drop,
+      loadId:load.id,
+      type:"loadAccepted",
+      createdAt:serverTimestamp()
+    });
+
+    router.push("/owner/my-requests");
+
+  }catch(err){
+    console.error(err);
+    alert("Error accepting load");
+  }
+
+};
   return(
     <div className="min-h-screen bg-[#FAFAFA] flex flex-col">
 
@@ -224,58 +251,61 @@ export default function OwnerSearchLoads() {
 
       {/* LOAD CARDS */}
 
-      <div className="max-w-6xl mx-auto grid md:grid-cols-2 lg:grid-cols-3 gap-10 px-6 mb-16">
+<div className="max-w-6xl mx-auto grid md:grid-cols-2 lg:grid-cols-3 gap-10 px-6 mb-16">
 
-        {loads.map((load)=>(
+{loads.map((load) => (
 
-          <motion.div
-            key={load.id}
-            whileHover={{y:-6,scale:1.02}}
-            className="bg-white rounded-2xl shadow-md p-14 border-2 border-gray-200 hover:border-[#F4B400] hover:shadow-xl transition"
-          >
+<motion.div
+  key={load.id}
+  whileHover={{ y: -6, scale: 1.02 }}
+  className={`bg-white rounded-2xl shadow-md p-14 border-2 transition hover:shadow-xl ${
+    load.id === loadId
+      ? "border-[#F4B400] bg-yellow-50"
+      : "border-gray-200 hover:border-[#F4B400]"
+  }`}
+>
 
-            <div className="flex items-center gap-3 text-xl font-semibold mb-5">
-              <FiTruck className="text-[#F4B400] text-2xl"/>
-              {load.typeOfGoods}
-            </div>
+  <div className="flex items-center gap-3 text-xl font-semibold mb-5">
+    <FiTruck className="text-[#F4B400] text-2xl"/>
+    {load.typeOfGoods}
+  </div>
 
-            <p className="flex items-center gap-3 text-gray-600 mb-3">
-              <FiMapPin className="text-[#F4B400] text-xl"/>
-              {load.pickup} → {load.drop}
-            </p>
+  <p className="flex items-center gap-3 text-gray-600 mb-3">
+    <FiMapPin className="text-[#F4B400] text-xl"/>
+    {load.pickup} → {load.drop}
+  </p>
 
-            <p className="flex items-center gap-3 text-gray-600 mb-3">
-              <FiCalendar className="text-[#F4B400]"/>
-              {load.pickupDate}
-              <FiClock className="ml-3 text-[#F4B400]"/>
-              {load.pickupTime}
-            </p>
+  <p className="flex items-center gap-3 text-gray-600 mb-3">
+    <FiCalendar className="text-[#F4B400]"/>
+    {load.pickupDate}
+    <FiClock className="ml-3 text-[#F4B400]"/>
+    {load.pickupTime}
+  </p>
 
-            <p className="flex items-center gap-3 text-gray-600 mb-6">
-              <FiPackage className="text-[#F4B400] text-xl"/>
-              Capacity: {load.capacityRequired} tons
-            </p>
+  <p className="flex items-center gap-3 text-gray-600 mb-6">
+    <FiPackage className="text-[#F4B400] text-xl"/>
+    Capacity: {load.capacityRequired} tons
+  </p>
 
-            <p className="text-lg font-semibold mb-6">
-              Customer Price: ₹ {load.price}
-            </p>
+  <p className="text-lg font-semibold mb-6">
+    Customer Price: ₹ {load.price}
+  </p>
 
-            <button
-              onClick={()=>{
-                setSelectedLoad(load);
-                setBidPrice(load.price || 0);
-              }}
-              className="w-full py-3 rounded-xl border-2 border-gray-300 font-semibold hover:bg-gray-100"
-            >
-              View Details
-            </button>
+  <button
+    onClick={()=>{
+      setSelectedLoad(load);
+      setBidPrice(load.price || 0);
+    }}
+    className="w-full py-3 rounded-xl border-2 border-gray-300 font-semibold hover:bg-gray-100"
+  >
+    View Details
+  </button>
 
-          </motion.div>
+</motion.div>
 
-        ))}
+))}
 
-      </div>
-
+</div>
 
       {/* MODAL */}
 

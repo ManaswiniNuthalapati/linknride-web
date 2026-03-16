@@ -6,8 +6,10 @@ import {
   where,
   getDoc,
   doc,
+  addDoc,
   updateDoc,
   onSnapshot,
+  serverTimestamp
 } from "firebase/firestore";
 
 import { motion } from "framer-motion";
@@ -18,6 +20,7 @@ type RequestType = {
   id: string;
   loadId: string;
   ownerPrice: number;
+  ownerId: string;
   status: string;
   load: any;
 };
@@ -30,11 +33,14 @@ export default function CustomerMyRequests() {
   const [loading,setLoading] = useState(true);
   const [timeLeft,setTimeLeft] = useState<{[key:string]:number}>({});
 
+  const uid =
+    typeof window !== "undefined"
+    ? localStorage.getItem("linknride_uid")
+    : null;
+
   /* FETCH CUSTOMER REQUESTS */
 
   useEffect(()=>{
-
-    const uid = localStorage.getItem("linknride_uid");
 
     if(!uid){
       setLoading(false);
@@ -42,10 +48,11 @@ export default function CustomerMyRequests() {
     }
 
     const q = query(
-  collection(db,"requests"),
-  where("customerId","==",uid),
-  where("status","==","pending")
-);
+      collection(db,"requests"),
+      where("customerId","==",uid),
+      where("status","==","pending")
+    );
+
     const unsub = onSnapshot(q, async(snapshot)=>{
 
       const temp:RequestType[] = [];
@@ -75,47 +82,50 @@ export default function CustomerMyRequests() {
 
     return ()=>unsub();
 
-  },[]);
+  },[uid]);
+
 
   /* COUNTDOWN TIMER */
 
   useEffect(()=>{
 
-  const interval = setInterval(()=>{
+    const interval = setInterval(()=>{
 
-    const updated:{[key:string]:number} = {};
+      const updated:{[key:string]:number} = {};
 
-    requests.forEach((r)=>{
+      requests.forEach((r)=>{
 
-      if(!r.load?.lockExpiresAt) return;
+        if(!r.load?.lockExpiresAt) return;
 
-      const remaining = r.load.lockExpiresAt - Date.now();
+        const remaining = r.load.lockExpiresAt - Date.now();
 
-      updated[r.id] = remaining > 0 ? remaining : 0;
+        updated[r.id] = remaining > 0 ? remaining : 0;
 
-      if(remaining <= 0){
+        if(remaining <= 0){
 
-        updateDoc(doc(db,"requests",r.id),{
-          status:"expired"
-        });
+          updateDoc(doc(db,"requests",r.id),{
+            status:"expired"
+          });
 
-        updateDoc(doc(db,"loads",r.loadId),{
-          status:"open",
-          lockedBy:null,
-          lockExpiresAt:null
-        });
+          updateDoc(doc(db,"loads",r.loadId),{
+            status:"open",
+            lockedBy:null,
+            lockExpiresAt:null
+          });
 
-      }
+        }
 
-    });
+      });
 
-    setTimeLeft(updated);
+      setTimeLeft(updated);
 
-  },1000);
+    },1000);
 
-  return ()=>clearInterval(interval);
+    return ()=>clearInterval(interval);
 
-},[requests]);
+  },[requests]);
+
+
   /* FORMAT TIMER */
 
   const formatTime = (ms:number)=>{
@@ -127,9 +137,27 @@ export default function CustomerMyRequests() {
 
   };
 
+
+  /* GET CUSTOMER NAME */
+
+  const getCustomerName = async ()=>{
+
+    if(!uid) return "Customer";
+
+    const userSnap = await getDoc(doc(db,"users",uid));
+
+    if(userSnap.exists()){
+      return userSnap.data()?.profile?.fullName || "Customer";
+    }
+
+    return "Customer";
+
+  };
+
+
   /* ACCEPT LOAD */
 
-  const handleAccept = async(req:RequestType)=>{
+  const handleAccept = async (req: RequestType) => {
 
     await updateDoc(doc(db,"requests",req.id),{
       status:"accepted"
@@ -139,36 +167,69 @@ export default function CustomerMyRequests() {
       status:"booked"
     });
 
+    const customerName = await getCustomerName();
+
+    await addDoc(collection(db,"notifications"),{
+
+      userId:req.ownerId,
+      customerName:customerName,
+      pickup:req.load.pickup,
+      drop:req.load.drop,
+      message:"accepted your load offer",
+      type:"loadAccepted",
+      loadId:req.loadId,
+      createdAt:serverTimestamp(),
+      read:false
+
+    });
+
     alert("Load booked successfully");
 
   };
+
 
   /* REJECT LOAD */
 
   const handleReject = async(req:RequestType)=>{
 
-  try{
+    try{
 
-    // update request status
-    await updateDoc(doc(db,"requests",req.id),{
-      status:"rejected",
-      updatedAt:new Date()
-    });
+      await updateDoc(doc(db,"requests",req.id),{
+        status:"rejected",
+        updatedAt:serverTimestamp()
+      });
 
-    // unlock load
-    await updateDoc(doc(db,"loads",req.loadId),{
-      status:"open",
-      lockedBy:null,
-      lockExpiresAt:null
-    });
+      await updateDoc(doc(db,"loads",req.loadId),{
+        status:"open",
+        lockedBy:null,
+        lockExpiresAt:null
+      });
 
-    alert("Request rejected");
+      const customerName = await getCustomerName();
 
-  }catch(err){
-    console.log(err);
-  }
+      await addDoc(collection(db,"notifications"),{
 
-};
+        userId:req.ownerId,
+        customerName:customerName,
+        pickup:req.load.pickup,
+        drop:req.load.drop,
+        message:"rejected your load offer",
+        type:"loadRejected",
+        loadId:req.loadId,
+        createdAt:serverTimestamp(),
+        read:false
+
+      });
+
+      alert("Request rejected");
+
+    }catch(err){
+      console.log(err);
+    }
+
+  };
+
+
   return(
 
     <div className="min-h-screen flex flex-col bg-[#F5F6F8]">
@@ -198,9 +259,7 @@ export default function CustomerMyRequests() {
           onClick={()=>router.push("/customer/dashboard")}
           className="text-sm text-black font-semibold hover:underline"
         >
-
           ← Back to Dashboard
-
         </button>
 
       </header>
@@ -228,13 +287,12 @@ export default function CustomerMyRequests() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-  {requests
-  .filter(r => r.status === "pending")
-  .map((r)=>{
+            {requests.map((r)=>{
 
-    const remaining = timeLeft[r.id] || 0;
+              const remaining = timeLeft[r.id] || 0;
 
-    return(
+              return(
+
                 <motion.div
                   key={r.id}
                   whileHover={{y:-6}}

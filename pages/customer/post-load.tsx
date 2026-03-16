@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { addDoc, collection, serverTimestamp, getDoc, doc } from "firebase/firestore";
 import { db } from "../../firebaseConfig";
 import Image from "next/image";
 import { calculateSuggestedPrice } from "../../utils/priceEngine";
@@ -43,33 +43,61 @@ export default function PostLoad() {
 
   const handleSubmit = async (e:any) => {
 
-    e.preventDefault();
+  e.preventDefault();
 
-    const uid = localStorage.getItem("linknride_uid");
+  const uid = localStorage.getItem("linknride_uid");
 
-    if (!uid) return alert("Login required");
+  if (!uid) return alert("Login required");
 
-    const price = Number(finalPrice);
+  const price = Number(finalPrice);
 
-const minAllowed = suggestedPrice * 0.97;
+  const minAllowed = suggestedPrice * 0.97;
 
-if(price < minAllowed){
-  alert("Prices are too low");
-  return;
+  if(price < minAllowed){
+    alert("Prices are too low");
+    return;
+  }
+
+  // 🔹 get customer name from users collection
+  const userSnap = await getDoc(doc(db,"users",uid));
+
+let customerName = "Customer";
+
+if(userSnap.exists()){
+  const data = userSnap.data();
+
+  customerName =
+    data.profile?.fullName ||
+    data.name ||
+    "Customer";
 }
+  // 🔹 create load
+  const loadRef = await addDoc(collection(db,"loads"),{
+    ...form,
+    price,
+    customerId: uid,
+    customerName: customerName,
+    createdAt: serverTimestamp(),
+    status:"open"
+  });
 
-    await addDoc(collection(db, "loads"), {
-      ...form,
-      price,
-      customerId: uid,
-      createdAt: serverTimestamp(),
-    });
+  const loadId = loadRef.id;
 
-    alert("Load Posted Successfully 🚚");
+  // 🔔 create notification
+  await addDoc(collection(db,"notifications"),{
+  type:"loadPosted",
+  customerName:customerName,
+  pickup:form.pickup,
+  drop:form.drop,
+  loadId:loadId,
+  createdAt:serverTimestamp(),
+  read:false
+});
+  alert("Load Posted Successfully 🚚");
 
-    router.push("/customer/dashboard");
-  };
+  router.push("/customer/dashboard");
 
+};
   return (
     <div className="min-h-screen bg-[#FAFAFA]">
 
