@@ -118,15 +118,19 @@ export default function MyLoads() {
                 </div>
 
                 <p className="text-gray-700 text-sm">
-                  <strong>Route:</strong> {load.pickup} → {load.drop}
-                  <br />
-                  <strong>Date:</strong> {load.pickupDateTime}
-                  <br />
-                  <strong>Capacity:</strong> {load.capacityRequired} tons
-                  <br />
-                  <strong>Price:</strong> ₹{load.price}
-                </p>
-
+  <strong>Route:</strong> {load.pickup} → {load.drop}
+  <br />
+  <strong>Date:</strong>{" "}
+{load.pickupDate && load.pickupTime
+  ? `${load.pickupDate} ${load.pickupTime}`
+  : "N/A"}<br />
+  <strong>Capacity:</strong> {load.capacityRequired} tons
+  <br />
+  <strong>Vehicle:</strong>{" "}
+  {load.preferredVehicle || load.vehicleType || "N/A"}
+  <br />
+  <strong>Price:</strong> ₹{load.price}
+</p>
                 <button
                   onClick={() => router.push(`/customer/load/${load.id}`)}
                   className="mt-4 text-sm text-black font-semibold hover:underline"

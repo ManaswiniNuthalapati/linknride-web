@@ -183,6 +183,18 @@ export default function CustomerMyRequests() {
 
     });
 
+    await addDoc(collection(db,"notifications"),{
+  userId:req.ownerId,
+  customerName:customerName,
+  pickup:req.load.pickup,
+  drop:req.load.drop,
+  message:`${customerName} accepted your load offer`,
+  type:"loadAcceptedByCustomer",
+  loadId:req.loadId,
+  createdAt:serverTimestamp(),
+  read:false
+});
+
     alert("Load booked successfully");
 
   };
@@ -221,6 +233,7 @@ export default function CustomerMyRequests() {
 
       });
 
+
       alert("Request rejected");
 
     }catch(err){
@@ -230,131 +243,112 @@ export default function CustomerMyRequests() {
   };
 
 
-  return(
+  return (
+  <div className="min-h-screen bg-[#F5F6F8] flex flex-col">
 
-    <div className="min-h-screen flex flex-col bg-[#F5F6F8]">
+    {/* HEADER */}
+    <header className="flex justify-between items-center px-8 py-4 bg-white border-b">
+      <h1 className="text-2xl font-bold text-black">My Requests</h1>
 
-      <header className="bg-white shadow-sm px-10 py-4 flex justify-between items-center">
+      <button
+        onClick={() => router.push("/customer/dashboard")}
+        className="text-black font-semibold hover:underline"
+      >
+        ← Back to Dashboard
+      </button>
+    </header>
 
-        <div
-          className="flex items-center gap-2 cursor-pointer"
-          onClick={()=>router.push("/customer/dashboard")}
-        >
+    {/* CONTENT */}
+    <motion.div className="max-w-6xl mx-auto w-full p-6 flex-grow">
 
-          <Image
-            src="/logo.jpg"
-            alt="Logo"
-            width={36}
-            height={36}
-            className="rounded-full"
-          />
+      <h2 className="text-xl font-semibold text-gray-800 mb-6">
+        Active Requests
+      </h2>
 
-          <h1 className="text-2xl font-bold text-black">
-            LinknRide
-          </h1>
+      {loading ? (
+        <div className="bg-white p-6 rounded-xl shadow-sm text-center">
+          Loading...
+        </div>
+      ) : requests.length === 0 ? (
+        <div className="bg-white p-8 rounded-xl shadow-sm text-center text-gray-500">
+          No active requests
+        </div>
+      ) : (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+
+          {requests.map((r) => {
+            const remaining = timeLeft[r.id] || 0;
+
+            return (
+              <motion.div
+                key={r.id}
+                whileHover={{ y: -6 }}
+                className="
+                  bg-white
+                  border border-gray-200
+                  rounded-xl
+                  p-5
+                  shadow-sm
+                  transition
+                  hover:border-yellow-400
+                  hover:shadow-[0_8px_30px_rgba(250,204,21,0.25)]
+                "
+              >
+
+                {/* TITLE */}
+                <h3 className="text-lg font-bold text-gray-900 mb-2">
+                  {r.load.pickup} → {r.load.drop}
+                </h3>
+
+                {/* INFO */}
+                <p className="text-sm text-gray-600">
+                  Your Price: ₹{r.load.price}
+                </p>
+
+                <p className="text-md font-semibold text-green-600 mt-1">
+                  Owner Offer: ₹{r.ownerPrice}
+                </p>
+
+                {/* TIMER */}
+                {remaining > 0 && (
+                  <p className="mt-3 text-[#F4B400] font-semibold">
+                    ⏳ {formatTime(remaining)} left
+                  </p>
+                )}
+
+                {/* ACTIONS */}
+                <div className="flex gap-3 mt-5">
+
+                  <button
+                    onClick={() => handleAccept(r)}
+                    className="flex-1 bg-[#F4B400] hover:bg-yellow-500 text-black py-2 rounded-lg font-semibold"
+                  >
+                    Accept
+                  </button>
+
+                  <button
+                    onClick={() => handleReject(r)}
+                    className="flex-1 border border-gray-300 hover:bg-gray-100 py-2 rounded-lg font-semibold"
+                  >
+                    Reject
+                  </button>
+
+                </div>
+
+              </motion.div>
+            );
+          })}
 
         </div>
+      )}
 
-        <button
-          onClick={()=>router.push("/customer/dashboard")}
-          className="text-sm text-black font-semibold hover:underline"
-        >
-          ← Back to Dashboard
-        </button>
+    </motion.div>
 
-      </header>
+    {/* FOOTER */}
+    <footer className="text-center text-gray-500 text-sm py-4 border-t">
+      © {new Date().getFullYear()} LinknRide. All rights reserved.
+    </footer>
 
-
-      <motion.section className="flex-grow px-10 py-10">
-
-        <h2 className="text-2xl font-bold text-black mb-8 text-center">
-          Active Requests
-        </h2>
-
-        {loading ? (
-
-          <div className="bg-white p-6 rounded-lg shadow text-center">
-            Loading...
-          </div>
-
-        ) : requests.length===0 ? (
-
-          <div className="bg-white p-8 rounded-lg shadow text-center">
-            No active requests.
-          </div>
-
-        ) : (
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-            {requests.map((r)=>{
-
-              const remaining = timeLeft[r.id] || 0;
-
-              return(
-
-                <motion.div
-                  key={r.id}
-                  whileHover={{y:-6}}
-                  className="bg-white rounded-2xl shadow-sm p-6 border border-gray-200 hover:border-yellow-400"
-                >
-
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">
-                    {r.load.pickup} → {r.load.drop}
-                  </h3>
-
-                  <p className="text-sm text-gray-600">
-                    Customer Price: ₹{r.load.price}
-                  </p>
-
-                  <p className="text-lg font-semibold text-green-600">
-                    Owner Offer: ₹{r.ownerPrice}
-                  </p>
-
-                  {remaining>0 && (
-
-                    <p className="mt-3 text-[#F4B400] font-semibold">
-                      Time Left: {formatTime(remaining)}
-                    </p>
-
-                  )}
-
-                  <div className="flex gap-3 mt-5">
-
-                    <button
-                      onClick={()=>handleAccept(r)}
-                      className="bg-green-600 text-white px-4 py-2 rounded-lg"
-                    >
-                      Accept
-                    </button>
-
-                    <button
-                      onClick={()=>handleReject(r)}
-                      className="bg-red-600 text-white px-4 py-2 rounded-lg"
-                    >
-                      Reject
-                    </button>
-
-                  </div>
-
-                </motion.div>
-
-              )
-
-            })}
-
-          </div>
-
-        )}
-
-      </motion.section>
-
-      <footer className="bg-white border-t text-center text-gray-500 text-sm py-4">
-        © {new Date().getFullYear()} LinknRide
-      </footer>
-
-    </div>
-
-  );
-
+  </div>
+);
 }

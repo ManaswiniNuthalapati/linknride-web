@@ -57,79 +57,114 @@ export default function LoadDetails() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 px-6 py-8">
-      {/* HEADER */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-blue-700">📦 Load Details</h1>
-        <button
-          onClick={() => router.push("/customer/my-loads")}
-          className="text-blue-600 hover:underline"
-        >
-          ← Back
-        </button>
-      </div>
+  <div className="min-h-screen bg-[#F5F6F8] flex flex-col">
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-3xl bg-white rounded-xl shadow p-6 mx-auto"
+    {/* HEADER */}
+    <div className="flex justify-between items-center px-8 py-5 border-b bg-white">
+      <h1 className="text-2xl font-bold text-black">Load Details</h1>
+
+      <button
+        onClick={() => router.push("/customer/my-loads")}
+        className="text-gray-700 font-medium hover:underline"
       >
-        {/* STATUS */}
-        <span
-          className={`inline-block mb-4 px-3 py-1 rounded-full text-sm font-medium ${
-            load.status === "open"
-              ? "bg-yellow-100 text-yellow-800"
-              : load.status === "ongoing"
-              ? "bg-blue-100 text-blue-800"
-              : load.status === "completed"
-              ? "bg-green-100 text-green-800"
-              : "bg-red-100 text-red-800"
-          }`}
-        >
-          {load.status?.toUpperCase()}
-        </span>
-
-        {/* LOAD INFO */}
-        <div className="space-y-2 text-gray-700">
-          <p><strong>Goods:</strong> {load.typeOfGoods}</p>
-          <p><strong>Pickup:</strong> {load.pickup}</p>
-          <p><strong>Drop:</strong> {load.drop}</p>
-          <p><strong>Date & Time:</strong> {load.pickupDate} {load.pickupTime}</p>
-          <p><strong>Capacity:</strong> {load.capacityRequired} tons</p>
-          <p><strong>Preferred Vehicle:</strong> {load.preferredVehicleType}</p>
-          <p><strong>Price:</strong> ₹{load.price}</p>
-        </div>
-
-        {/* DRIVER INFO (ONLY WHEN ASSIGNED) */}
-        {(load.status === "ongoing" || load.status === "completed") && (
-          <div className="mt-6 p-4 bg-slate-50 rounded-lg">
-            <h3 className="font-semibold mb-2">Assigned Driver</h3>
-            <p><strong>Name:</strong> {load.driverName || "—"}</p>
-            <p><strong>Vehicle:</strong> {load.vehicleType || "—"}</p>
-          </div>
-        )}
-
-        {/* ACTIONS */}
-        <div className="mt-6 flex gap-3">
-          {load.status === "open" && (
-            <button
-              onClick={handleCancel}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg"
-            >
-              Cancel Load
-            </button>
-          )}
-
-          {(load.status === "completed" || load.status === "cancelled") && (
-            <button
-              onClick={handleRepost}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg"
-            >
-              Repost Load
-            </button>
-          )}
-        </div>
-      </motion.div>
+        ← Back to My Loads
+      </button>
     </div>
-  );
+
+    {/* CONTENT */}
+    <div className="flex flex-1 items-center justify-center px-4">
+
+      {load ? (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white border border-gray-200 rounded-2xl shadow-sm p-8 w-full max-w-xl"
+        >
+
+          {/* STATUS */}
+          <span
+            className={`inline-block mb-5 px-3 py-1 rounded-full text-sm font-medium ${
+              load.status === "open"
+                ? "bg-yellow-100 text-yellow-800"
+                : load.status === "ongoing"
+                ? "bg-blue-100 text-blue-800"
+                : load.status === "completed"
+                ? "bg-green-100 text-green-800"
+                : "bg-red-100 text-red-800"
+            }`}
+          >
+            {load.status?.toUpperCase()}
+          </span>
+
+          {/* DETAILS */}
+          <div className="space-y-3 text-gray-800 text-[15px]">
+            <p><strong>Goods:</strong> {load.typeOfGoods}</p>
+            <p><strong>Pickup:</strong> {load.pickup}</p>
+            <p><strong>Drop:</strong> {load.drop}</p>
+
+            <p>
+              <strong>Date & Time:</strong>{" "}
+              {load.pickupDate && load.pickupTime
+                ? `${load.pickupDate} ${load.pickupTime}`
+                : "N/A"}
+            </p>
+
+            <p><strong>Capacity:</strong> {load.capacityRequired} tons</p>
+
+            <p>
+              <strong>Preferred Vehicle:</strong>{" "}
+              {load.preferredVehicle || load.vehicleType || "N/A"}
+            </p>
+
+            <p><strong>Price:</strong> ₹{load.price}</p>
+          </div>
+
+          {/* DRIVER INFO */}
+          {(load.status === "ongoing" || load.status === "completed") && (
+            <div className="mt-6 p-4 bg-gray-50 rounded-xl">
+              <h3 className="font-semibold mb-2">Assigned Driver</h3>
+              <p><strong>Name:</strong> {load.driverName || "—"}</p>
+              <p><strong>Vehicle:</strong> {load.vehicleType || "—"}</p>
+            </div>
+          )}
+
+          {/* ACTIONS */}
+          <div className="mt-6 flex gap-3">
+
+            {load.status === "open" && (
+              <button
+                onClick={handleCancel}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg"
+              >
+                Cancel Load
+              </button>
+            )}
+
+            {(load.status === "completed" || load.status === "cancelled") && (
+              <button
+                onClick={handleRepost}
+                className="px-4 py-2 bg-black text-white rounded-lg"
+              >
+                Repost Load
+              </button>
+            )}
+
+          </div>
+
+        </motion.div>
+      ) : (
+        <div className="text-center text-gray-500">
+          <p className="text-lg font-medium">No load found</p>
+        </div>
+      )}
+
+    </div>
+
+    {/* FOOTER */}
+    <footer className="text-center text-gray-500 text-sm py-4 border-t">
+      © {new Date().getFullYear()} LinknRide. All rights reserved.
+    </footer>
+
+  </div>
+);
 }

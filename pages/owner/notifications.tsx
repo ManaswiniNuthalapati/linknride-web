@@ -162,9 +162,29 @@ const handleDelete = async (id:string) => {
 
   <div>
 
-   <p className="font-semibold">
-    {n.customerName} posted a load from {n.pickup} → {n.drop}
-   </p>
+  <p className="font-semibold">
+
+  {n.type === "loadPosted" &&
+    `${n.customerName} posted a load from ${n.pickup} → ${n.drop}`
+  }
+
+  {n.type === "loadAccepted" &&
+    `${n.customerName} accepted your load offer ${n.pickup} → ${n.drop}`
+  }
+
+  {n.type === "loadRejected" &&
+    `${n.customerName} rejected your load offer ${n.pickup} → ${n.drop}`
+  }
+
+  {n.type === "loadAcceptedByCustomer" &&
+    `${n.customerName} accepted your load offer ${n.pickup} → ${n.drop}`
+  }
+
+  {n.type === "loadRejectedByCustomer" &&
+    `${n.customerName} rejected your load offer ${n.pickup} → ${n.drop}`
+  }
+
+</p>
 
    <p className="text-sm text-gray-500">
     {new Date(n.createdAt?.seconds * 1000).toLocaleString()}

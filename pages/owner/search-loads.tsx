@@ -82,25 +82,28 @@ export default function OwnerSearchLoads() {
 
       const now = Date.now();
 
-      const items:LoadItem[] = snap.docs.map((d)=>({
-        id:d.id,
-        ...(d.data() as any)
-      }));
+const items:LoadItem[] = snap.docs.map((d)=>({
+  id:d.id,
+  ...(d.data() as any)
+}));
 
-      /* Hide locked loads from other owners */
+const visibleLoads = items.filter(load => {
 
-      const visibleLoads = items.filter(load => {
+  // hide booked loads
+  if(load.status === "booked") return false;
 
-        if(load.status !== "locked") return true;
+  // hide locked loads
+  if(load.status === "locked") return false;
 
-        if(load.lockedBy === ownerId) return true;
+  // show only open loads
+  if(load.status === "open") return true;
 
-        if(load.lockExpiresAt && load.lockExpiresAt < now) return true;
+  // show expired locks
+  if(load.lockExpiresAt && load.lockExpiresAt < now) return true;
 
-        return false;
+  return false;
 
-      });
-
+});
       setLoads(visibleLoads);
 
     });

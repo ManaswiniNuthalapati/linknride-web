@@ -7,7 +7,7 @@ export default function SupportPage() {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FAFAFA]">
+    <div className="min-h-screen flex flex-col bg-[#F5F6F8]">
 
       {/* HEADER */}
       <header className="bg-white border-b px-10 py-4 flex justify-between items-center">
@@ -17,15 +17,15 @@ export default function SupportPage() {
         >
           <Image src="/logo.jpg" alt="logo" width={45} height={45} className="rounded-full"/>
           <h1 className="text-2xl font-extrabold">
-            <span className="text-black">LINK</span>
+            <span>LINK</span>
             <span className="text-[#F4B400]">N</span>
-            <span className="text-black">RIDE</span>
+            <span>RIDE</span>
           </h1>
         </div>
 
         <button
           onClick={() => router.back()}
-          className="text-[#F4B400] font-semibold flex items-center gap-2"
+          className="flex items-center gap-2 text-[#F4B400] font-semibold hover:underline"
         >
           <FaArrowLeft /> Back
         </button>
@@ -33,24 +33,24 @@ export default function SupportPage() {
 
       {/* CONTENT */}
       <motion.div
-        initial={{opacity:0,y:20}}
-        animate={{opacity:1,y:0}}
-        className="flex-grow flex items-center justify-center px-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex-grow px-6 py-12"
       >
-        <div className="bg-white w-full max-w-3xl rounded-2xl shadow-xl p-10 text-center border-2 border-gray-200">
 
-          <h2 className="text-3xl font-bold mb-3">
-            Help & Support
-          </h2>
+        <div className="max-w-5xl mx-auto">
 
-          <p className="text-gray-600 mb-10">
-            Need help? Our support team is here for you 24/7 
-          </p>
+          {/* TITLE */}
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold">Help & Support</h2>
+            <p className="text-gray-600 mt-2">
+              Need help? Our support team is available 24/7
+            </p>
+          </div>
 
-          {/* HELPLINE CARD */}
-          <div className="grid md:grid-cols-3 gap-6">
+          {/* CARDS */}
+          <div className="grid md:grid-cols-3 gap-8">
 
-            {/* PHONE */}
             <SupportCard
               icon={<FaPhoneAlt />}
               title="Call Us"
@@ -59,16 +59,14 @@ export default function SupportPage() {
               btnText="Call Now"
             />
 
-            {/* WHATSAPP */}
             <SupportCard
               icon={<FaWhatsapp />}
               title="WhatsApp"
-              value="Chat with support"
+              value="Instant chat support"
               action="https://wa.me/919014572504"
-              btnText="Open WhatsApp"
+              btnText="Chat Now"
             />
 
-            {/* EMAIL */}
             <SupportCard
               icon={<FaEnvelope />}
               title="Email"
@@ -80,43 +78,90 @@ export default function SupportPage() {
           </div>
 
           {/* FAQ */}
-          <div className="mt-12 text-left">
-            <h3 className="text-xl font-bold mb-4">Frequently Asked Questions</h3>
+          <div className="mt-16">
 
-            <ul className="space-y-3 text-gray-700">
-              <li>• How do I post my availability?</li>
-              <li>• How do owners contact me?</li>
-              <li>• How do I update my profile?</li>
-              <li>• How do I track my jobs?</li>
-            </ul>
+            <h3 className="text-2xl font-bold mb-6 text-center">
+              Frequently Asked Questions
+            </h3>
+
+            <div className="space-y-4 max-w-3xl mx-auto">
+
+              {[
+                "How do I post my availability?",
+                "How do owners contact me?",
+                "How do I update my profile?",
+                "How do I track my jobs?"
+              ].map((q, i) => (
+                <div
+                  key={i}
+                  className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition"
+                >
+                  {q}
+                </div>
+              ))}
+
+            </div>
+
           </div>
 
         </div>
+
       </motion.div>
 
       {/* FOOTER */}
       <footer className="bg-[#0B0B0B] text-white text-center py-4">
-        © {new Date().getFullYear()} <span className="text-[#F4B400]">LinknRide</span>
+        © {new Date().getFullYear()}{" "}
+        <span className="text-[#F4B400] font-semibold">LinknRide</span>
       </footer>
     </div>
   );
 }
 
-/* SUPPORT CARD COMPONENT */
+
+/* UPDATED CARD */
 function SupportCard({ icon, title, value, action, btnText }: any) {
   return (
-    <div className="border-2 border-gray-200 rounded-xl p-6 flex flex-col items-center hover:border-[#F4B400] transition">
-      <div className="text-3xl text-[#F4B400] mb-3">{icon}</div>
+    <motion.div
+      whileHover={{ y: -6 }}
+      className="
+        bg-white
+        rounded-2xl
+        p-8
+        border border-gray-200
+        shadow-sm
+        hover:border-[#F4B400]
+        hover:shadow-[0_8px_30px_rgba(250,204,21,0.25)]
+        text-center
+        flex flex-col items-center
+      "
+    >
 
-      <h4 className="font-bold">{title}</h4>
+      {/* ICON */}
+      <div className="w-14 h-14 flex items-center justify-center bg-yellow-100 text-[#F4B400] text-2xl rounded-full mb-4">
+        {icon}
+      </div>
 
-      <p className="text-gray-600 mb-4">{value}</p>
+      {/* TITLE */}
+      <h4 className="text-lg font-semibold">{title}</h4>
 
+      {/* VALUE */}
+      <p className="text-gray-600 mt-1 mb-5">{value}</p>
+
+      {/* BUTTON */}
       <a href={action} target="_blank">
-        <button className="border-2 border-[#F4B400] bg-white text-black px-4 py-2 rounded-lg font-semibold hover:bg-[#EAD7A1] transition duration-200">
+        <button className="
+          px-5 py-2
+          bg-[#F4B400]
+          text-black
+          rounded-lg
+          font-semibold
+          hover:scale-105
+          transition
+        ">
           {btnText}
         </button>
       </a>
-    </div>
+
+    </motion.div>
   );
 }
