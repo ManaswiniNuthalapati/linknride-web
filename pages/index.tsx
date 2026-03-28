@@ -1,252 +1,183 @@
-import React from "react";
-import { Package, Truck, ShieldCheck, MapPin, Zap } from "lucide-react";
-import { motion } from "framer-motion";
+import { useState } from "react";
+import Layout from "../components/Layout";
+import Link from "next/link";
+import {
+  FiShield,
+  FiEye,
+  FiRefreshCcw,
+  FiZap,
+  FiHeadphones,
+  FiTruck,
+  FiUsers,
+  FiSearch,
+} from "react-icons/fi";
 
-export default function LinknRide() {
+export default function Home() {
+  const [activeCard, setActiveCard] = useState<number | null>(null);
+
   return (
-    <div className="font-sans text-gray-800">
+    <Layout title="LinknRide - Smart Logistics Platform">
 
       {/* ================= HERO ================= */}
-      <section className="relative text-white overflow-hidden">
+      <section className="relative min-h-[520px] md:h-[560px] flex items-center overflow-hidden">
 
-  {/* BACKGROUND IMAGE */}
-  <img
-    src="/truck.png"
-    className="absolute inset-0 w-full h-full object-cover object-[center_25%]"
-    alt="truck"
-  />
-
-  {/* CONTENT */}
-  <motion.div
-  initial={{ opacity: 0, y: 50 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.8 }}
-  className="relative z-10 max-w-7xl mx-auto px-6 py-24">
-    {/* ✅ FIXED POSITION (NOW VISIBLE) */}
-   <div className="flex items-center gap-4 mb-8">
-
-  {/* LOGO (slightly bigger) */}
-  <img
-    src="/logo_final.png"
-    alt="logo"
-    className="w-16 h-16 md:w-20 md:h-20 object-contain"
-  />
-
-  {/* BRAND NAME (BIG + HIGHLIGHTED) */}
-  <h2 className="text-4xl md:text-5xl font-extrabold text-yellow-400 tracking-wide">
-    LinknRide
-  </h2>
-
-</div>
-    {/* MAIN TEXT */}
-    <h1 className="text-4xl md:text-6xl font-bold leading-tight">
-      Smart Logistics.<br />
-      <span className="text-yellow-400">Faster Transport.</span><br />
-      Trusted Network.
-    </h1>
-
-    <p className="mt-6 text-lg max-w-xl text-gray-100">
-      Connect with verified truck owners and drivers instantly.
-      Post loads, find vehicles, and track deliveries in real-time.
-    </p>
-
-    <div className="mt-6 flex gap-4">
-      <button className="bg-yellow-400 text-black px-6 py-3 rounded-lg font-semibold">
-        Post a Load
-      </button>
-      <button className="bg-white text-black px-6 py-3 rounded-lg font-semibold">
-        Find a Truck
-      </button>
-    </div>
-
-    <div className="mt-10 flex gap-6 text-sm text-gray-200">
-      <span>✔ Verified Drivers</span>
-      <span>✔ Real-Time Tracking</span>
-      <span>✔ Secure Payments</span>
-    </div>
-
-  </motion.div>
-</section>
-      {/* ================= STATS ================= */}
-      <div className="bg-white shadow-xl rounded-xl max-w-5xl mx-auto -mt-16 grid grid-cols-2 md:grid-cols-4 text-center py-6 z-10 relative">
-        <div>
-          <h2 className="text-2xl font-bold">10K+</h2>
-          <p>Active Users</p>
-        </div>
-        <div>
-          <h2 className="text-2xl font-bold">50K+</h2>
-          <p>Loads Delivered</p>
-        </div>
-        <div>
-          <h2 className="text-2xl font-bold">5K+</h2>
-          <p>Vehicles Listed</p>
-        </div>
-        <div>
-          <h2 className="text-2xl font-bold">98%</h2>
-          <p>Satisfaction Rate</p>
-        </div>
-      </div>
-
-      {/* ================= HOW IT WORKS ================= */}
-      <section className="relative py-20 text-center min-h-[500px]">
-
-        {/* Background */}
-        <img
-          src="/clim.png"
-          alt="bg"
-          className="absolute inset-0 w-full h-full object-cover"
+        {/* Background Image */}
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage:
+              "url('https://images.unsplash.com/photo-1501700493788-fa1a4fc9fe62?q=80&w=2000')",
+          }}
         />
 
-        {/* FIXED OVERLAY */}
-        <div className="absolute inset-0 bg-white/30 backdrop-blur-sm"></div>
+        {/* Dark Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/80 to-black/70"></div>
 
         {/* Content */}
-        <div className="relative z-10">
-          <h2 className="text-3xl font-bold mb-12">
-            How LinknRide Works
-          </h2>
+        <div className="relative max-w-7xl mx-auto px-4 md:px-6 text-white">
 
-          <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto px-6">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight">
+            Smart Logistics.{" "}
+            <span className="text-yellow-400">Faster Transport.</span>
+            <br />
+            Trusted Network.
+          </h1>
 
-  {/* CARD 1 */}
-  <div className="bg-white p-6 rounded-xl shadow hover:shadow-xl transition">
-    <Package className="text-yellow-400 w-10 h-10 mx-auto mb-4" />
-    <h3 className="font-semibold text-lg">Post Your Load</h3>
-    <p className="text-sm mt-2 text-gray-600">
-      List your cargo and connect instantly with verified transporters.
-    </p>
-  </div>
+          <p className="mt-5 text-base md:text-lg max-w-xl text-white/90">
+            Connecting customers, vehicle owners, and drivers on one powerful
+            platform — making logistics simple and transparent.
+          </p>
 
-  {/* CARD 2 */}
-  <div className="bg-white p-6 rounded-xl shadow hover:shadow-xl transition">
-    <Truck className="text-yellow-400 w-10 h-10 mx-auto mb-4" />
-    <h3 className="font-semibold text-lg">Get Matched with Vehicles</h3>
-    <p className="text-sm mt-2 text-gray-600">
-      Find available trucks and transporters instantly.
-    </p>
-  </div>
+          <div className="mt-8 flex gap-4 flex-wrap">
+            <Link
+              href="/login"
+              className="bg-yellow-400 hover:bg-yellow-300 text-black px-6 py-3 rounded-lg font-semibold transition"
+            >
+              Get Started →
+            </Link>
 
-  {/* CARD 3 */}
-  <div className="bg-white p-6 rounded-xl shadow hover:shadow-xl transition">
-    <MapPin className="text-yellow-400 w-10 h-10 mx-auto mb-4" />
-    <h3 className="font-semibold text-lg">Track Your Shipment</h3>
-    <p className="text-sm mt-2 text-gray-600">
-      Monitor your load in real-time with live tracking.
-    </p>
-  </div>
+            <a
+              href="#services"
+              className="border border-white hover:bg-white hover:text-black px-6 py-3 rounded-lg transition"
+            >
+              Explore Services
+            </a>
+          </div>
 
-</div>
+        </div>
+      </section>
+
+      {/* ================= STATS ================= */}
+      <section className="py-10 bg-white text-center">
+        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 px-4">
+          <div>
+            <h3 className="text-2xl md:text-3xl font-bold text-black">10K+</h3>
+            <p className="text-gray-600">Active Users</p>
+          </div>
+          <div>
+            <h3 className="text-2xl md:text-3xl font-bold text-black">50K+</h3>
+            <p className="text-gray-600">Loads Delivered</p>
+          </div>
+          <div>
+            <h3 className="text-2xl md:text-3xl font-bold text-black">5K+</h3>
+            <p className="text-gray-600">Vehicles Listed</p>
+          </div>
+          <div>
+            <h3 className="text-2xl md:text-3xl font-bold text-black">98%</h3>
+            <p className="text-gray-600">Satisfaction Rate</p>
+          </div>
         </div>
       </section>
 
       {/* ================= SERVICES ================= */}
-      <section className="py-20 text-center">
-        <h2 className="text-3xl font-bold mb-12">Our Services</h2>
+      <section id="services" className="py-16 md:py-20 bg-gray-50 text-center px-4">
+        <h2 className="text-2xl md:text-3xl font-bold mb-4 text-black">
+          Our Services
+        </h2>
+        <p className="text-gray-600 mb-12">
+          Everything you need to move goods efficiently across the country.
+        </p>
 
-        <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto px-6">
+        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
+          {[
+            {
+              icon: <FiTruck size={28} />,
+              title: "Post Loads",
+              desc: "List your cargo and connect with verified transporters instantly.",
+            },
+            {
+              icon: <FiSearch size={28} />,
+              title: "Find Vehicles",
+              desc: "Browse available trucks and trailers matching your needs.",
+            },
+            {
+              icon: <FiUsers size={28} />,
+              title: "Hire Drivers",
+              desc: "Access a network of experienced, verified drivers.",
+            },
+          ].map((s, i) => (
+            <div
+              key={i}
+              onClick={() => setActiveCard(i)}
+              className={`cursor-pointer bg-white p-8 rounded-2xl transition-all duration-300 ${
+                activeCard === i
+                  ? "border-2 border-yellow-400 shadow-xl scale-105"
+                  : "border border-transparent hover:shadow-lg"
+              }`}
+            >
+              <div className="bg-yellow-100 w-14 h-14 flex items-center justify-center rounded-xl mx-auto mb-5 text-yellow-500">
+                {s.icon}
+              </div>
 
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition">
-            <img src="/truck1.png" className="h-48 w-full object-cover" />
-            <div className="p-6">
-              <h3 className="font-semibold text-lg">Post Loads</h3>
-              <p className="text-sm mt-2">
-                List your cargo and connect with transporters instantly.
-              </p>
-              <button className="mt-4 bg-yellow-400 px-4 py-2 rounded-lg font-semibold">
-                Learn More
-              </button>
+              <h3 className="font-semibold text-xl mb-2 text-black">
+                {s.title}
+              </h3>
+
+              <p className="text-gray-600">{s.desc}</p>
             </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition">
-            <img src="/truck2.png" className="h-48 w-full object-cover" />
-            <div className="p-6">
-              <h3 className="font-semibold text-lg">Find Vehicles</h3>
-              <p className="text-sm mt-2">
-                Browse available trucks matching your requirements.
-              </p>
-              <button className="mt-4 bg-yellow-400 px-4 py-2 rounded-lg font-semibold">
-                Learn More
-              </button>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition">
-            <img src="/truck3.png" className="h-48 w-full object-cover" />
-            <div className="p-6">
-              <h3 className="font-semibold text-lg">Hire Drivers</h3>
-              <p className="text-sm mt-2">
-                Access verified and experienced drivers easily.
-              </p>
-              <button className="mt-4 bg-yellow-400 px-4 py-2 rounded-lg font-semibold">
-                Learn More
-              </button>
-            </div>
-          </div>
-
+          ))}
         </div>
       </section>
 
-  <section
-  className="py-28 text-white"
-  style={{
-    backgroundImage: "url('/road.png')",  // ✅ correct file name
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    backgroundRepeat: "no-repeat",
-  }}
->
-  <div className="max-w-6xl mx-auto px-6 flex">
+      {/* ================= WHY CHOOSE ================= */}
+      <section className="py-16 md:py-20 bg-black text-white text-center px-4">
+        <h2 className="text-2xl md:text-3xl font-bold mb-12">
+          Why Choose LinknRide?
+        </h2>
 
-  <div className="max-w-lg">
-
-    <h2 className="text-4xl md:text-5xl font-bold mb-10">
-      Why Choose <span className="text-yellow-400">LinknRide?</span>
-    </h2>
-
-    <ul className="space-y-6 text-lg md:text-xl text-white">
-
-      <li className="flex items-start gap-4">
-        <Truck className="text-yellow-400 w-6 h-6 mt-1" />
-        Instant load matching with available trucks
-      </li>
-
-      <li className="flex items-start gap-4">
-        <ShieldCheck className="text-yellow-400 w-6 h-6 mt-1" />
-        Verified drivers and transporters
-      </li>
-
-      <li className="flex items-start gap-4">
-        <MapPin className="text-yellow-400 w-6 h-6 mt-1" />
-        Real-time shipment tracking
-      </li>
-
-      <li className="flex items-start gap-4">
-        <Zap className="text-yellow-400 w-6 h-6 mt-1" />
-        Fast and secure payments
-      </li>
-
-    </ul>
-
-  </div>
-
-</div>
-</section>
+        <div className="max-w-6xl mx-auto grid md:grid-cols-5 gap-10">
+          {[
+            [FiShield, "Verified Drivers & Fleet Owners", "Identity verified"],
+            [FiEye, "Live Trip Visibility", "Track loads in real-time"],
+            [FiRefreshCcw, "Return Trip Optimization", "Reduce empty runs"],
+            [FiZap, "Instant Booking", "Hire drivers quickly"],
+            [FiHeadphones, "24/7 Support", "Dedicated assistance"],
+          ].map(([Icon, title, desc]: any, i) => (
+            <div key={i}>
+              <div className="bg-yellow-400 text-black w-14 h-14 flex items-center justify-center rounded-full mx-auto mb-4">
+                <Icon size={24} />
+              </div>
+              <h4 className="font-semibold mb-1">{title}</h4>
+              <p className="text-gray-400 text-sm">{desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
 
       {/* ================= CTA ================= */}
-      <section className="relative py-20 text-center">
+      <section className="bg-yellow-400 py-14 md:py-16 text-center px-4">
+        <h2 className="text-2xl md:text-3xl font-bold mb-4 text-black">
+          Ready to Transform Your Logistics?
+        </h2>
 
-        <div className="relative">
-          <h2 className="text-2xl font-bold mb-6">
-            Ready to Transform Your Logistics?
-          </h2>
-
-          <button className="bg-yellow-400 px-8 py-3 rounded-lg font-semibold hover:scale-105 transition">
-            Get Started Today →
-          </button>
-        </div>
+        <Link
+          href="/login"
+          className="bg-black hover:bg-gray-900 text-white px-8 py-3 rounded-lg font-semibold transition"
+        >
+          Get Started Today →
+        </Link>
       </section>
 
-    </div>
+    </Layout>
   );
 }
