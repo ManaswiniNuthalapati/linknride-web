@@ -1,7 +1,7 @@
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useEffect } from "react";
 import { useRouter } from "next/router";
 import { motion } from "framer-motion";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, query, where, onSnapshot } from "firebase/firestore";
 import { db } from "../../firebaseConfig";
 
 import {
@@ -44,6 +44,25 @@ export default function PostVehicle() {
   const [loading,setLoading] = useState(false);
   const [error,setError] = useState("");
   const [vehicleValid,setVehicleValid] = useState(true);
+  useEffect(()=>{
+
+const uid = localStorage.getItem("linknride_uid");
+
+if(!uid) return;
+
+const q = query(
+collection(db,"vehicles"),
+where("ownerId","==",uid)
+);
+
+const unsub = onSnapshot(q,(snap)=>{
+setVehicleCount(snap.size);
+});
+
+return ()=>unsub();
+
+},[]);
+  const [vehicleCount,setVehicleCount] = useState(0);
 
   const handleChange = (e:any)=>{
     const {name,value} = e.target;
@@ -266,10 +285,33 @@ Add Vehicle Availability
 
 <button
 type="submit"
-className="mt-8 w-full border-2 border-[#F4B400] bg-white text-black py-3 rounded-xl font-semibold hover:bg-[#EAD7A1] transition duration-200"
+disabled={vehicleCount === 0}
+className={`mt-8 w-full py-3 rounded-xl font-semibold transition ${
+vehicleCount === 0
+? "bg-gray-300 text-gray-500 cursor-not-allowed"
+: "border-2 border-[#F4B400] bg-white text-black hover:bg-[#EAD7A1]"
+}`}
 >
 {loading ? "Posting..." : "Post Vehicle"}
 </button>
+{vehicleCount === 0 && (
+
+<p className="text-red-600 text-sm mt-4 text-center">
+
+Register your vehicle before posting.
+
+<span
+onClick={()=>router.push("/owner/edit-profile")}
+className="text-[#F4B400] font-semibold cursor-pointer hover:underline ml-1"
+>
+
+here
+
+</span>
+
+</p>
+
+)}
 
 </form>
 
