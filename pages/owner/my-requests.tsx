@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { FiX } from "react-icons/fi";
+import { PhoneIcon } from "@heroicons/react/24/solid";
 import { db } from "../../firebaseConfig";
 import {
   collection,
@@ -56,6 +58,7 @@ export default function OwnerMyRequests() {
         }
 
         if(!loadData) continue;
+        if(reqData.status === "deleted") continue;
 
         temp.push({
           id:docSnap.id,
@@ -73,7 +76,6 @@ export default function OwnerMyRequests() {
     return ()=>unsub();
 
   },[]);
-
 
 
   /* COUNTDOWN TIMER */
@@ -95,7 +97,7 @@ export default function OwnerMyRequests() {
 
         /* AUTO UNLOCK WHEN TIMER ENDS */
 
-        if(remaining <= 0){
+        if(remaining <= 0 && r.status === "pending"){
 
           updateDoc(doc(db,"loads",r.loadId),{
             status:"open",
@@ -130,6 +132,15 @@ export default function OwnerMyRequests() {
     return `${minutes}:${seconds.toString().padStart(2,"0")}`;
 
   };
+  const handleDelete = async(id:string)=>{
+
+await updateDoc(doc(db,"requests",id),{
+status:"deleted"
+});
+
+setRequests(prev => prev.filter(r=>r.id!==id));
+
+}
 
 
   return(
@@ -197,9 +208,6 @@ export default function OwnerMyRequests() {
 
             const remaining = timeLeft[r.id] || 0;
 
-            const showPhone =
-              remaining <= (10 * 60 * 1000) && remaining > 0;
-
             return(
 
               <motion.div
@@ -216,19 +224,54 @@ export default function OwnerMyRequests() {
                     {r.load.pickup} → {r.load.drop}
                   </h3>
 
-                  {/* STATUS BADGE */}
+                  <div className="flex items-center gap-3">
 
-                  <span className={`px-3 py-1 text-xs rounded-full font-semibold
-                    ${
-                      r.status === "accepted"
-                        ? "bg-green-100 text-green-700"
-                        : r.status === "rejected"
-                        ? "bg-red-100 text-red-700"
-                        : "bg-yellow-100 text-yellow-700"
-                    }
-                  `}>
-                    {r.status?.toUpperCase() || "PENDING"}
-                  </span>
+                    {/* CALL ICON */}
+
+                    {r.status === "pending" && remaining > 0 && (
+
+                      <a
+                      href="tel:9014572504"
+                      title="Call LinknRide"
+                      className="flex items-center justify-center w-9 h-9 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-md transition hover:scale-110"
+                      >
+
+                        <PhoneIcon className="w-5 h-5"/>
+
+                      </a>
+
+                    )}
+
+                    {/* STATUS BADGE */}
+
+                    <span className={`px-3 py-1 text-xs rounded-full font-semibold
+                      ${
+                        r.status === "accepted"
+                          ? "bg-green-100 text-green-700"
+                          : r.status === "rejected"
+                          ? "bg-red-100 text-red-700"
+                          : r.status === "expired"
+                          ? "bg-gray-200 text-gray-700"
+                          : "bg-yellow-100 text-yellow-700"
+                      }
+                    `}>
+                      {r.status?.toUpperCase() || "PENDING"}
+                    </span>
+                    {r.status === "expired" && (
+
+<button
+onClick={()=>handleDelete(r.id)}
+className="flex items-center justify-center w-6 h-6 bg-gray-100 hover:bg-red-100 rounded-full transition"
+title="Remove request"
+>
+
+<FiX className="w-3 h-3 text-gray-500 hover:text-red-500"/>
+
+</button>
+
+)}
+
+                  </div>
 
                 </div>
 
@@ -244,9 +287,19 @@ export default function OwnerMyRequests() {
 
                 {remaining > 0 && r.status === "pending" && (
 
-                  <p className="mt-3 text-[#F4B400] font-semibold">
-                    Time Left: {formatTime(remaining)}
-                  </p>
+                  <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-xl p-3">
+
+                    <p className="text-yellow-700 font-semibold flex items-center gap-2">
+                      Reserved for you
+                    </p>
+
+                    <p className="text-xl font-bold text-gray-900 mt-1">
+                      {formatTime(remaining)} remaining
+                    </p>
+
+                    
+
+                  </div>
 
                 )}
 
@@ -258,28 +311,6 @@ export default function OwnerMyRequests() {
                   <p className="mt-3 text-red-600 font-semibold">
                     Request Rejected by Customer
                   </p>
-
-                )}
-
-
-                {/* CUSTOMER PHONE */}
-
-                {showPhone && (
-
-                  <div className="mt-4">
-
-                    <p className="text-sm text-gray-600">
-                      Customer Phone
-                    </p>
-
-                    <a
-                    href={`tel:${r.load.customerPhone}`}
-                    className="inline-block mt-2 bg-[#F4B400] px-4 py-2 rounded-lg font-semibold"
-                    >
-                    Call Customer
-                    </a>
-
-                  </div>
 
                 )}
 

@@ -34,7 +34,6 @@ type LoadItem = {
   price?: number;
   customerId?: string;
   typeOfGoods?: string;
-
   status?: string;
   lockedBy?: string;
   lockExpiresAt?: number;
@@ -45,12 +44,12 @@ export default function OwnerSearchLoads() {
   const router = useRouter();
   const { loadId } = router.query;
 
-
   const [search, setSearch] = useState({ pickup: "", drop: "" });
   const [loads, setLoads] = useState<LoadItem[]>([]);
   const [selectedLoad,setSelectedLoad] = useState<LoadItem | null>(null);
   const [bidPrice,setBidPrice] = useState(0);
-  
+  const [activeCount,setActiveCount] = useState(0);
+  const [accepting,setAccepting] = useState(false);
 
   const ownerId =
     typeof window !== "undefined"
@@ -82,28 +81,49 @@ export default function OwnerSearchLoads() {
 
       const now = Date.now();
 
-const items:LoadItem[] = snap.docs.map((d)=>({
-  id:d.id,
-  ...(d.data() as any)
-}));
+      const items:LoadItem[] = snap.docs.map((d)=>({
+        id:d.id,
+        ...(d.data() as any)
+      }));
 
-const visibleLoads = items.filter(load => {
+      const visibleLoads = items.filter(load => {
 
-  // hide booked loads
-  if(load.status === "booked") return false;
+/* ADD THIS DATE CHECK FIRST */
 
-  // hide locked loads
-  if(load.status === "locked") return false;
+if(load.pickupDate && load.pickupTime){
 
-  // show only open loads
-  if(load.status === "open") return true;
+const loadDateTime = new Date(
+load.pickupDate + "T" + load.pickupTime
+);
 
-  // show expired locks
-  if(load.lockExpiresAt && load.lockExpiresAt < now) return true;
+if(loadDateTime.getTime() < Date.now()){
 
-  return false;
+/* optional: mark expired */
+updateDoc(doc(db,"loads",load.id),{
+status:"expired"
+});
+
+return false;
+
+}
+
+}
+
+/* YOUR EXISTING LOGIC (unchanged) */
+
+if(load.status === "booked") return false;
+
+if(load.status === "locked") return false;
+
+if(load.status === "open") return true;
+
+if(load.lockExpiresAt && load.lockExpiresAt < now)
+return true;
+
+return false;
 
 });
+
       setLoads(visibleLoads);
 
     });
@@ -111,6 +131,23 @@ const visibleLoads = items.filter(load => {
     return ()=>unsub();
 
   },[search,ownerId]);
+  useEffect(()=>{
+
+if(!ownerId) return;
+
+const q = query(
+collection(db,"requests"),
+where("ownerId","==",ownerId),
+where("status","==","pending")
+);
+
+const unsub = onSnapshot(q,(snap)=>{
+setActiveCount(snap.size);
+});
+
+return ()=>unsub();
+
+},[ownerId]);
 
   const handleChange = (e:any)=>
     setSearch({...search,[e.target.name]:e.target.value});
@@ -126,21 +163,37 @@ const visibleLoads = items.filter(load => {
 
     if(!ownerId) return;
 
+    /* LIMIT CHECK ADDED */
+
+    const activeQuery = query(
+      collection(db,"requests"),
+      where("ownerId","==",ownerId),
+      where("status","==","pending")
+    );
+
+    const activeSnap = await getDocs(activeQuery);
+
+    if(activeSnap.size >= 2){
+
+      alert("Maximum 2 active negotiations allowed");
+
+      return;
+
+    }
+
+    /* EXISTING LOGIC */
+
     const commission = Math.round(price * 0.05);
     const ownerEarning = Math.round(price * 0.95);
 
     const now = Date.now();
     const lockExpiresAt = now + (30 * 60 * 1000);
 
-    /* LOCK LOAD */
-
     await updateDoc(doc(db,"loads",load.id),{
       status:"locked",
       lockedBy:ownerId,
       lockExpiresAt
     });
-
-    /* CREATE CUSTOMER REQUEST */
 
     await addDoc(collection(db,"requests"),{
       loadId:load.id,
@@ -155,19 +208,17 @@ const visibleLoads = items.filter(load => {
       lockExpiresAt
     });
 
-    /* GET OWNER NAME */
-
     const userSnap = await getDocs(
-      query(collection(db,"users"), where("uid","==",ownerId))
+      query(collection(db,"users"),
+      where("uid","==",ownerId))
     );
 
     let ownerName = "Owner";
 
     userSnap.forEach((doc)=>{
-      ownerName = doc.data()?.profile?.fullName || "Owner";
+      ownerName =
+      doc.data()?.profile?.fullName || "Owner";
     });
-
-    /* SEND CUSTOMER NOTIFICATION */
 
     await addDoc(collection(db,"notifications"),{
       userId:load.customerId,
@@ -188,10 +239,9 @@ const visibleLoads = items.filter(load => {
   }
 
 };
+
   return(
     <div className="min-h-screen bg-[#FAFAFA] flex flex-col">
-
-      {/* HEADER */}
 
       <header className="bg-white border-b px-10 py-4 flex justify-between items-center">
 
@@ -199,7 +249,11 @@ const visibleLoads = items.filter(load => {
           onClick={()=>router.push("/owner/dashboard")}
           className="flex items-center gap-3 cursor-pointer"
         >
-          <Image src="/logo.jpg" alt="logo" width={45} height={45} className="rounded-full"/>
+          <Image src="/logo.jpg"
+          alt="logo"
+          width={45}
+          height={45}
+          className="rounded-full"/>
 
           <h1 className="text-2xl font-extrabold">
             <span className="text-black">LINK</span>
@@ -217,9 +271,6 @@ const visibleLoads = items.filter(load => {
 
       </header>
 
-
-      {/* SEARCH */}
-
       <motion.form
         onSubmit={handleSearch}
         initial={{opacity:0,y:20}}
@@ -235,8 +286,15 @@ const visibleLoads = items.filter(load => {
 
           <div className="grid md:grid-cols-2 gap-6">
 
-            <Input name="pickup" label="Pickup Location" value={search.pickup} onChange={handleChange}/>
-            <Input name="drop" label="Drop Location" value={search.drop} onChange={handleChange}/>
+            <Input name="pickup"
+            label="Pickup Location"
+            value={search.pickup}
+            onChange={handleChange}/>
+
+            <Input name="drop"
+            label="Drop Location"
+            value={search.drop}
+            onChange={handleChange}/>
 
           </div>
 
@@ -251,58 +309,55 @@ const visibleLoads = items.filter(load => {
 
       </motion.form>
 
+      <div className="max-w-6xl mx-auto grid md:grid-cols-2 lg:grid-cols-3 gap-10 px-6 mb-16">
 
-      {/* LOAD CARDS */}
-
-<div className="max-w-6xl mx-auto grid md:grid-cols-2 lg:grid-cols-3 gap-10 px-6 mb-16">
-
-{loads.map((load) => (
+{loads.map((load)=>(
 
 <motion.div
-  key={load.id}
-  whileHover={{ y: -6, scale: 1.02 }}
-  className={`bg-white rounded-2xl shadow-md p-14 border-2 transition hover:shadow-xl ${
-    load.id === loadId
-      ? "border-[#F4B400] bg-yellow-50"
-      : "border-gray-200 hover:border-[#F4B400]"
-  }`}
+key={load.id}
+whileHover={{ y:-6, scale:1.02 }}
+className={`bg-white rounded-2xl shadow-md p-14 border-2 transition hover:shadow-xl ${
+load.id===loadId
+? "border-[#F4B400] bg-yellow-50"
+: "border-gray-200 hover:border-[#F4B400]"
+}`}
 >
 
-  <div className="flex items-center gap-3 text-xl font-semibold mb-5">
-    <FiTruck className="text-[#F4B400] text-2xl"/>
-    {load.typeOfGoods}
-  </div>
+<div className="flex items-center gap-3 text-xl font-semibold mb-5">
+<FiTruck className="text-[#F4B400] text-2xl"/>
+{load.typeOfGoods}
+</div>
 
-  <p className="flex items-center gap-3 text-gray-600 mb-3">
-    <FiMapPin className="text-[#F4B400] text-xl"/>
-    {load.pickup} → {load.drop}
-  </p>
+<p className="flex items-center gap-3 text-gray-600 mb-3">
+<FiMapPin className="text-[#F4B400] text-xl"/>
+{load.pickup} → {load.drop}
+</p>
 
-  <p className="flex items-center gap-3 text-gray-600 mb-3">
-    <FiCalendar className="text-[#F4B400]"/>
-    {load.pickupDate}
-    <FiClock className="ml-3 text-[#F4B400]"/>
-    {load.pickupTime}
-  </p>
+<p className="flex items-center gap-3 text-gray-600 mb-3">
+<FiCalendar className="text-[#F4B400]"/>
+{load.pickupDate}
+<FiClock className="ml-3 text-[#F4B400]"/>
+{load.pickupTime}
+</p>
 
-  <p className="flex items-center gap-3 text-gray-600 mb-6">
-    <FiPackage className="text-[#F4B400] text-xl"/>
-    Capacity: {load.capacityRequired} tons
-  </p>
+<p className="flex items-center gap-3 text-gray-600 mb-6">
+<FiPackage className="text-[#F4B400] text-xl"/>
+Capacity: {load.capacityRequired} tons
+</p>
 
-  <p className="text-lg font-semibold mb-6">
-    Customer Price: ₹ {load.price}
-  </p>
+<p className="text-lg font-semibold mb-6">
+Customer Price: ₹ {load.price}
+</p>
 
-  <button
-    onClick={()=>{
-      setSelectedLoad(load);
-      setBidPrice(load.price || 0);
-    }}
-    className="w-full py-3 rounded-xl border-2 border-gray-300 font-semibold hover:bg-gray-100"
-  >
-    View Details
-  </button>
+<button
+onClick={()=>{
+setSelectedLoad(load);
+setBidPrice(load.price || 0);
+}}
+className="w-full py-3 rounded-xl border-2 border-gray-300 font-semibold hover:bg-gray-100"
+>
+View Details
+</button>
 
 </motion.div>
 
@@ -310,115 +365,135 @@ const visibleLoads = items.filter(load => {
 
 </div>
 
-      {/* MODAL */}
+{selectedLoad && (
 
-      {selectedLoad && (
+<div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
 
-      <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+<div className="bg-white w-[420px] rounded-2xl shadow-xl p-8">
 
-        <div className="bg-white w-[420px] rounded-2xl shadow-xl p-8">
+<h2 className="text-2xl font-bold mb-6 text-center">
+Load Details
+</h2>
 
-          <h2 className="text-2xl font-bold mb-6 text-center">
-            Load Details
-          </h2>
+<div className="bg-gray-50 rounded-lg p-4 mb-6">
 
-          <div className="bg-gray-50 rounded-lg p-4 mb-6">
+<p className="text-gray-600 text-sm">Route</p>
 
-            <p className="text-gray-600 text-sm">Route</p>
+<p className="font-semibold text-lg">
+{selectedLoad.pickup} → {selectedLoad.drop}
+</p>
 
-            <p className="font-semibold text-lg">
-              {selectedLoad.pickup} → {selectedLoad.drop}
-            </p>
+</div>
 
-          </div>
+<div className="mb-6">
 
-          <div className="mb-6">
+<p className="text-sm text-gray-500">
+Customer Price
+</p>
 
-            <p className="text-sm text-gray-500">Customer Price</p>
+<p className="text-2xl font-bold text-[#F4B400]">
+₹{selectedLoad.price}
+</p>
 
-            <p className="text-2xl font-bold text-[#F4B400]">
-              ₹{selectedLoad.price}
-            </p>
+</div>
 
-          </div>
+<div className="mb-6">
 
-          <div className="mb-6">
+<input
+type="range"
+min={selectedLoad.price || 0}
+max={Math.round((selectedLoad.price || 0) * 1.1)}
+value={bidPrice}
+onChange={(e)=>setBidPrice(Number(e.target.value))}
+className="w-full accent-[#F4B400]"
+/>
 
-            <input
-              type="range"
-              min={selectedLoad.price || 0}
-              max={Math.round((selectedLoad.price || 0) * 1.1)}
-              value={bidPrice}
-              onChange={(e)=>setBidPrice(Number(e.target.value))}
-              className="w-full accent-[#F4B400]"
-            />
+</div>
 
-          </div>
+<div className="bg-gray-50 rounded-lg p-4 mb-6 space-y-2">
 
-          <div className="bg-gray-50 rounded-lg p-4 mb-6 space-y-2">
+<div className="flex justify-between">
+<span>Your Price</span>
+<span className="font-semibold">₹{bidPrice}</span>
+</div>
 
-            <div className="flex justify-between">
-              <span>Your Price</span>
-              <span className="font-semibold">₹{bidPrice}</span>
-            </div>
+<div className="flex justify-between text-gray-600">
+<span>Platform Fee (5%)</span>
+<span>₹{Math.round(bidPrice*0.05)}</span>
+</div>
 
-            <div className="flex justify-between text-gray-600">
-              <span>Platform Fee (5%)</span>
-              <span>₹{Math.round(bidPrice*0.05)}</span>
-            </div>
+<div className="flex justify-between font-bold text-lg">
+<span>Your Earnings</span>
+<span className="text-green-600">
+₹{Math.round(bidPrice*0.95)}
+</span>
+</div>
 
-            <div className="flex justify-between font-bold text-lg">
-              <span>Your Earnings</span>
-              <span className="text-green-600">
-                ₹{Math.round(bidPrice*0.95)}
-              </span>
-            </div>
+</div>
 
-          </div>
+<div className="flex gap-4">
 
-          <div className="flex gap-4">
+<button
+onClick={()=>setSelectedLoad(null)}
+className="flex-1 py-3 rounded-lg border border-gray-300 hover:bg-gray-100"
+>
+Cancel
+</button>
 
-            <button
-              onClick={()=>setSelectedLoad(null)}
-              className="flex-1 py-3 rounded-lg border border-gray-300 hover:bg-gray-100"
-            >
-              Cancel
-            </button>
+<button
+onClick={()=>handleAcceptLoad(selectedLoad,bidPrice)}
+disabled={activeCount >= 2}
+className={`flex-1 py-3 rounded-lg font-semibold transition ${
+activeCount >=2
+? "bg-gray-300 cursor-not-allowed text-gray-600"
+: "bg-[#F4B400] hover:bg-[#e0a800]"
+}`}
+>
+Accept Load
+</button>
 
-            <button
-              onClick={()=>handleAcceptLoad(selectedLoad,bidPrice)}
-              className="flex-1 py-3 rounded-lg bg-[#F4B400] font-semibold hover:bg-[#e0a800]"
-            >
-              Accept Load
-            </button>
+</div>
+{activeCount >=2 && (
 
-          </div>
+<p className="text-red-600 text-sm mt-4 text-center font-semibold">
 
-        </div>
+⚠ Maximum 2 active negotiations allowed
 
-      </div>
+</p>
 
-      )}
+)}
 
-      <footer className="bg-[#0B0B0B] text-white text-center text-sm py-4">
-        © {new Date().getFullYear()} <span className="text-[#F4B400] font-semibold">LinknRide</span>
-      </footer>
 
-    </div>
-  );
+</div>
+
+</div>
+
+)}
+
+<footer className="bg-[#0B0B0B] text-white text-center text-sm py-4 mt-auto">
+© {new Date().getFullYear()} 
+<span className="text-[#F4B400] font-semibold">
+LinknRide
+</span>
+</footer>
+
+</div>
+);
 }
 
 function Input({label,name,value,onChange,type="text"}:any){
-  return(
-    <div>
-      <label className="block text-sm font-semibold mb-1">{label}</label>
-      <input
-        type={type}
-        name={name}
-        value={value}
-        onChange={onChange}
-        className="w-full border-2 border-gray-200 rounded-lg px-4 py-2 focus:border-[#F4B400] outline-none"
-      />
-    </div>
-  );
+return(
+<div>
+<label className="block text-sm font-semibold mb-1">
+{label}
+</label>
+<input
+type={type}
+name={name}
+value={value}
+onChange={onChange}
+className="w-full border-2 border-gray-200 rounded-lg px-4 py-2 focus:border-[#F4B400] outline-none"
+/>
+</div>
+);
 }
