@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { FiX } from "react-icons/fi";
-import { PhoneIcon } from "@heroicons/react/24/solid";
+import PhoneIcon from "@heroicons/react/24/solid/PhoneIcon";
 import { db } from "../../firebaseConfig";
 import {
   collection,
